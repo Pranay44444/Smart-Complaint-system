@@ -1,0 +1,1 @@
+![alt text](uml_diagrams/images/sequenceDiagram.png)
