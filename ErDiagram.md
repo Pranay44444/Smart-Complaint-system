@@ -1,1 +1,0 @@
-![alt text](uml_diagrams/images/ErDiagram_.png)
