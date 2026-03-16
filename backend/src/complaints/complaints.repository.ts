@@ -63,4 +63,41 @@ export class ComplaintsRepository {
   async save(complaint: ComplaintDocument): Promise<Complaint> {
     return complaint.save();
   }
+
+  async countByStatus(): Promise<{ _id: string; count: number }[]> {
+    return this.complaintModel.aggregate([
+      { $group: { _id: '$status', count: { $sum: 1 } } },
+    ]);
+  }
+
+  async resolvedPerStaff(): Promise<{ staffId: string; staffName: string; staffEmail: string; count: number }[]> {
+    return this.complaintModel.aggregate([
+      {
+        $match: {
+          assignedTo: { $ne: null },
+          status: { $in: [ComplaintStatus.RESOLVED, ComplaintStatus.CLOSED] },
+        },
+      },
+      { $group: { _id: '$assignedTo', count: { $sum: 1 } } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'staff',
+        },
+      },
+      { $unwind: '$staff' },
+      {
+        $project: {
+          staffId: { $toString: '$_id' },
+          staffName: '$staff.name',
+          staffEmail: '$staff.email',
+          count: 1,
+          _id: 0,
+        },
+      },
+      { $sort: { count: -1 } },
+    ]);
+  }
 }
