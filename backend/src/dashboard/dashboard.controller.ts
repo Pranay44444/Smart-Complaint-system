@@ -12,14 +12,12 @@ export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get('summary')
-  async getSummary() {
-    const data = await this.dashboardService.getSummary();
-    return { success: true, message: 'Dashboard summary retrieved', data };
+  getSummary() {
+    return this.dashboardService.getSummary();
   }
 
   @Get('staff-performance')
-  async getStaffPerformance() {
-    const data = await this.dashboardService.getStaffPerformance();
-    return { success: true, message: 'Staff performance retrieved', data };
+  getStaffPerformance() {
+    return this.dashboardService.getStaffPerformance();
   }
 }

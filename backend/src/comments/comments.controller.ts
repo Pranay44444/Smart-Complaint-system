@@ -14,22 +14,20 @@ export class CommentsController {
 
   @Post()
   @Roles(Role.USER, Role.STAFF, Role.ADMIN)
-  async addComment(
+  addComment(
     @Param('id') complaintId: string,
     @Body() dto: CreateCommentDto,
     @GetUser() user: { userId: string; role: Role },
   ) {
-    const data = await this.commentsService.addComment(complaintId, dto, user);
-    return { success: true, message: 'Comment added successfully', data };
+    return this.commentsService.addComment(complaintId, dto, user);
   }
 
   @Get()
   @Roles(Role.USER, Role.STAFF, Role.ADMIN)
-  async getComments(
+  getComments(
     @Param('id') complaintId: string,
     @GetUser() user: { userId: string; role: Role },
   ) {
-    const data = await this.commentsService.getComments(complaintId, user);
-    return { success: true, message: 'Comments retrieved successfully', data };
+    return this.commentsService.getComments(complaintId, user);
   }
 }

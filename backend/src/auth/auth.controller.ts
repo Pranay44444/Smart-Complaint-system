@@ -8,23 +8,13 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  async register(@Body() registerDto: RegisterDto) {
-    const data = await this.authService.register(registerDto);
-    return {
-      success: true,
-      message: 'User registered successfully',
-      data,
-    };
+  register(@Body() registerDto: RegisterDto) {
+    return this.authService.register(registerDto);
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() loginDto: LoginDto) {
-    const data = await this.authService.login(loginDto);
-    return {
-      success: true,
-      message: 'Login successful',
-      data,
-    };
+  login(@Body() loginDto: LoginDto) {
+    return this.authService.login(loginDto);
   }
 }

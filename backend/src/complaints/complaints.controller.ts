@@ -23,60 +23,54 @@ export class ComplaintsController {
 
   @Post()
   @Roles(Role.USER)
-  async create(
+  create(
     @Body() dto: CreateComplaintDto,
     @GetUser() user: { userId: string; role: Role },
   ) {
-    const data = await this.complaintsService.create(dto, user.userId);
-    return { success: true, message: 'Complaint created successfully', data };
+    return this.complaintsService.create(dto, user.userId);
   }
 
   @Get()
   @Roles(Role.USER, Role.STAFF, Role.ADMIN)
-  async findAll(@GetUser() user: { userId: string; role: Role }) {
-    const data = await this.complaintsService.findAll(user);
-    return { success: true, message: 'Complaints retrieved successfully', data };
+  findAll(@GetUser() user: { userId: string; role: Role }) {
+    return this.complaintsService.findAll(user);
   }
 
   @Get(':id')
   @Roles(Role.USER, Role.STAFF, Role.ADMIN)
-  async findById(
+  findById(
     @Param('id') id: string,
     @GetUser() user: { userId: string; role: Role },
   ) {
-    const data = await this.complaintsService.findById(id, user);
-    return { success: true, message: 'Complaint retrieved successfully', data };
+    return this.complaintsService.findById(id, user);
   }
 
   @Patch(':id/assign')
   @Roles(Role.ADMIN)
-  async assign(
+  assign(
     @Param('id') id: string,
     @Body('staffId') staffId: string,
     @GetUser() user: { userId: string; role: Role },
   ) {
-    const data = await this.complaintsService.assign(id, staffId, user);
-    return { success: true, message: 'Complaint assigned successfully', data };
+    return this.complaintsService.assign(id, staffId, user);
   }
 
   @Patch(':id/status')
   @Roles(Role.STAFF)
-  async updateStatus(
+  updateStatus(
     @Param('id') id: string,
     @Body('status') status: ComplaintStatus,
     @GetUser() user: { userId: string; role: Role },
   ) {
-    const data = await this.complaintsService.updateStatus(id, status, user);
-    return { success: true, message: 'Status updated successfully', data };
+    return this.complaintsService.updateStatus(id, status, user);
   }
 
   @Patch(':id/close')
   @Roles(Role.ADMIN)
-  async close(
+  close(
     @Param('id') id: string,
     @GetUser() user: { userId: string; role: Role },
   ) {
-    const data = await this.complaintsService.close(id, user);
-    return { success: true, message: 'Complaint closed successfully', data };
+    return this.complaintsService.close(id, user);
   }
 }
