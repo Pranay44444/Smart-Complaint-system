@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { UsersRepository } from '../users/users.repository';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { UserDocument } from '../users/schemas/user.schema';
 
 @Injectable()
 export class AuthService {
@@ -14,7 +15,7 @@ export class AuthService {
 
   async register(registerDto: RegisterDto) {
     const { email, password } = registerDto;
-    
+
     const existingUser = await this.usersRepository.findByEmail(email);
     if (existingUser) {
       throw new BadRequestException('User with this email already exists');
@@ -23,10 +24,10 @@ export class AuthService {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const user = await this.usersRepository.create({
+    const user = (await this.usersRepository.create({
       ...registerDto,
       password: hashedPassword,
-    });
+    })) as UserDocument;
 
     return {
       id: user._id,
@@ -38,7 +39,7 @@ export class AuthService {
 
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
-    
+
     const user = await this.usersRepository.findByEmail(email);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -49,16 +50,17 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { sub: user._id, email: user.email, role: user.role };
+    const doc = user as UserDocument;
+    const payload = { sub: doc._id, email: doc.email, role: doc.role };
     const accessToken = await this.jwtService.signAsync(payload);
 
     return {
-      accessToken,
+      access_token: accessToken,
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+        sub: doc._id,
+        name: doc.name,
+        email: doc.email,
+        role: doc.role,
       },
     };
   }
