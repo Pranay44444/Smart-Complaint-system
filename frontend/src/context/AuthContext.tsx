@@ -23,6 +23,12 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => {},
 });
 
+const getRoleHomePage = (role: string) => {
+  if (role === 'ADMIN') return '/admin/dashboard';
+  if (role === 'STAFF') return '/staff/complaints';
+  return '/dashboard';
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
-    router.push('/dashboard');
+    router.push(getRoleHomePage(userData.role));
   };
 
   const logout = () => {
@@ -63,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!user && !publicPaths.includes(pathname)) {
         router.push('/login');
       } else if (user && (pathname === '/login' || pathname === '/register')) {
-        router.push('/dashboard');
+        router.push(getRoleHomePage(user.role));
       }
     }
   }, [user, loading, pathname, router]);

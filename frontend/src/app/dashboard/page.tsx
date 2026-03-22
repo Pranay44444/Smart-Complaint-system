@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../lib/axios';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 
 interface Complaint {
@@ -14,12 +15,22 @@ interface Complaint {
 }
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
+  const router = useRouter();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Redirect non-USER roles to their correct home
   useEffect(() => {
+    if (!loading && user) {
+      if (user.role === 'ADMIN') router.replace('/admin/dashboard');
+      else if (user.role === 'STAFF') router.replace('/staff/complaints');
+    }
+  }, [user, loading, router]);
+
+  useEffect(() => {
+    if (!user || user.role !== 'USER') return;
     const fetchComplaints = async () => {
       try {
         const res = await api.get('/complaints');
@@ -27,12 +38,11 @@ export default function DashboardPage() {
       } catch (err) {
         setError('Failed to load complaints');
       } finally {
-        setLoading(false);
+        setFetchLoading(false);
       }
     };
-
     fetchComplaints();
-  }, []);
+  }, [user]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -45,13 +55,17 @@ export default function DashboardPage() {
     }
   };
 
+  if (loading || !user || user.role !== 'USER') {
+    return <div className="p-8 text-center text-gray-500">Loading...</div>;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
+              <h1 className="text-xl font-bold text-gray-900">My Dashboard</h1>
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">{user?.email}</span>
@@ -77,13 +91,16 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        {loading ? (
+        {fetchLoading ? (
           <p className="text-gray-500">Loading complaints...</p>
         ) : error ? (
           <p className="text-red-600">{error}</p>
         ) : complaints.length === 0 ? (
           <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500">
-            You haven't submitted any complaints yet.
+            You haven&apos;t submitted any complaints yet.{' '}
+            <Link href="/complaints/new" className="text-blue-600 font-medium hover:underline">
+              Submit your first one
+            </Link>
           </div>
         ) : (
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -100,11 +117,9 @@ export default function DashboardPage() {
                           {format(new Date(complaint.createdAt), 'MMM d, yyyy h:mm a')}
                         </p>
                       </div>
-                      <div>
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(complaint.status)}`}>
-                          {complaint.status}
-                        </span>
-                      </div>
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(complaint.status)}`}>
+                        {complaint.status}
+                      </span>
                     </div>
                   </Link>
                 </li>
