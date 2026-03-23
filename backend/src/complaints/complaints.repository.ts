@@ -64,6 +64,10 @@ export class ComplaintsRepository {
     return complaint.save();
   }
 
+  async countAll(): Promise<number> {
+    return this.complaintModel.countDocuments().exec();
+  }
+
   async countByStatus(): Promise<{ _id: string; count: number }[]> {
     return this.complaintModel.aggregate([
       { $group: { _id: '$status', count: { $sum: 1 } } },

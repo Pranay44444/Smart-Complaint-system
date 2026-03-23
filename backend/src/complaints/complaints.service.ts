@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Types } from 'mongoose';
 import { ComplaintsRepository } from './complaints.repository';
 import { UsersRepository } from '../users/users.repository';
 import { CreateComplaintDto } from './dto/create-complaint.dto';
@@ -16,8 +17,30 @@ export class ComplaintsService {
     private readonly usersRepository: UsersRepository,
   ) {}
 
+  private async getNextStaff(): Promise<Types.ObjectId | null> {
+    const staffList = await this.usersRepository.findAllByRole(Role.STAFF);
+    if (!staffList || staffList.length === 0) return null;
+
+    const totalComplaints = await this.complaintsRepository.countAll();
+    const index = totalComplaints % staffList.length;
+    return (staffList[index] as any)._id as Types.ObjectId;
+  }
+
   async create(dto: CreateComplaintDto, userId: string) {
-    return this.complaintsRepository.create(dto, userId);
+    const complaint = await this.complaintsRepository.create(dto, userId);
+
+    const staffId = await this.getNextStaff();
+    if (staffId) {
+      // assignTo already sets status → ASSIGNED and assignedTo
+      const updated = await this.complaintsRepository.assignTo(
+        (complaint as any)._id.toString(),
+        staffId.toString(),
+      );
+      return updated ?? complaint;
+    }
+
+    // Graceful fallback: no staff exists, complaint stays OPEN
+    return complaint;
   }
 
   async findAll(user: { userId: string; role: Role }) {

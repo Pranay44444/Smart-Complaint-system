@@ -33,4 +33,8 @@ export class UsersRepository {
   async delete(id: string): Promise<User | null> {
     return this.userModel.findByIdAndDelete(id).exec();
   }
+
+  async findAllByRole(role: Role): Promise<User[]> {
+    return this.userModel.find({ role }).exec();
+  }
 }
