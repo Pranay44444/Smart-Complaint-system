@@ -32,7 +32,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Link href="/admin/users" className="text-sm font-medium text-gray-600 hover:text-gray-900">Users</Link>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">{user.email}</span>
+              <span className="text-sm text-gray-500">{user.name || user.email}</span>
               <button onClick={logout} className="text-sm font-medium text-red-600 hover:text-red-500">Log out</button>
             </div>
           </div>

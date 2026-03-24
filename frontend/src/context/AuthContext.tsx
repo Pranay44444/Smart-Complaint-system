@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 export interface User {
   sub: string;
   email: string;
+  name?: string;
   role: string;
 }
 

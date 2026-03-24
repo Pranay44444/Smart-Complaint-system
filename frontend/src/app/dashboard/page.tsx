@@ -68,7 +68,7 @@ export default function DashboardPage() {
               <h1 className="text-xl font-bold text-gray-900">My Dashboard</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">{user?.email}</span>
+              <span className="text-sm text-gray-600">{user?.name || user?.email}</span>
               <button
                 onClick={logout}
                 className="text-sm font-medium text-red-600 hover:text-red-500"

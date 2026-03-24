@@ -54,7 +54,7 @@ export default function StaffComplaintsPage() {
               {complaints.map(c => (
                 <tr key={c._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{c.title}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{c.createdBy?.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{c.createdBy?.name || c.createdBy?.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{format(new Date(c.updatedAt), 'MMM d, yyyy')}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(c.status)}`}>

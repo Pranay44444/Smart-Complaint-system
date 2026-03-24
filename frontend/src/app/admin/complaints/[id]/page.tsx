@@ -62,7 +62,7 @@ export default function AdminComplaintDetailPage() {
     setSubmittingComment(true);
     try {
       const res = await api.post(`/complaints/${id}/comments`, { content: commentText });
-      setComments([...comments, { ...res.data.data, author: { email: user?.email, role: 'ADMIN', name: 'Admin User' } }]);
+      setComments([...comments, { ...res.data.data, author: { email: user?.email, role: 'ADMIN', name: user?.name || 'Admin User' } }]);
       setCommentText('');
     } catch (err) {
       alert('Failed to post comment');
@@ -99,7 +99,7 @@ export default function AdminComplaintDetailPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{complaint.title}</h1>
             <p className="text-sm text-gray-500 mt-1">
-              By <span className="font-medium">{complaint.createdBy?.email}</span> · {format(new Date(complaint.createdAt), 'MMM d, yyyy h:mm a')}
+              By <span className="font-medium">{complaint.createdBy?.name || complaint.createdBy?.email}</span> · {format(new Date(complaint.createdAt), 'MMM d, yyyy h:mm a')}
             </p>
           </div>
           <span className={`px-3 py-1 text-sm font-semibold rounded-full border ${getStatusColor(complaint.status)}`}>
@@ -116,7 +116,7 @@ export default function AdminComplaintDetailPage() {
             {/* Assignment */}
             <div className="flex items-center space-x-3 flex-wrap gap-y-2">
               <span className="text-sm text-gray-600">
-                Assigned to: <span className="font-semibold text-gray-900">{complaint.assignedTo?.email || 'Unassigned'}</span>
+                Assigned to: <span className="font-semibold text-gray-900">{complaint.assignedTo?.name || complaint.assignedTo?.email || 'Unassigned'}</span>
               </span>
               <div className="flex items-center space-x-2">
                 <select
