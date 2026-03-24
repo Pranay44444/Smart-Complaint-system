@@ -12,6 +12,7 @@ interface Complaint {
   title: string;
   status: string;
   createdAt: string;
+  assignedTo?: { name?: string; email?: string } | null;
 }
 
 export default function DashboardPage() {
@@ -113,9 +114,15 @@ export default function DashboardPage() {
                         <p className="text-sm font-medium text-blue-600 truncate">
                           {complaint.title}
                         </p>
-                        <p className="mt-1 text-xs text-gray-500">
-                          {format(new Date(complaint.createdAt), 'MMM d, yyyy h:mm a')}
-                        </p>
+                        <div className="mt-1 flex items-center space-x-2 text-xs text-gray-500">
+                          <span>{format(new Date(complaint.createdAt), 'MMM d, yyyy h:mm a')}</span>
+                          {complaint.assignedTo && (
+                            <>
+                              <span>•</span>
+                              <span className="font-medium text-gray-700">Assigned: {complaint.assignedTo.name || complaint.assignedTo.email}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(complaint.status)}`}>
                         {complaint.status}
