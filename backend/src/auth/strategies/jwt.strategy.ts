@@ -13,13 +13,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: string; email: string; role: string }) {
+  async validate(payload: { sub: string; email: string; role: string; orgId: string | null }) {
     const user = await this.usersRepository.findById(payload.sub);
     
     if (!user) {
       throw new UnauthorizedException();
     }
     
-    return { userId: payload.sub, email: payload.email, role: payload.role };
+    return { userId: payload.sub, email: payload.email, role: payload.role, orgId: payload.orgId ?? null };
   }
 }
