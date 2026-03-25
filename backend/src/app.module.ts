@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { ComplaintsModule } from './complaints/complaints.module';
 import { CommentsModule } from './comments/comments.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { OrganizationsModule } from './organizations/organizations.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     ComplaintsModule,
     CommentsModule,
     DashboardModule,
+    OrganizationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
