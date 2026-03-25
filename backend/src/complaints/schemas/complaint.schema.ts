@@ -20,6 +20,9 @@ export class Complaint {
 
   @Prop({ type: Types.ObjectId, ref: 'User', default: null })
   assignedTo: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Organization', required: true })
+  orgId: Types.ObjectId;
 }
 
 export const ComplaintSchema = SchemaFactory.createForClass(Complaint);
