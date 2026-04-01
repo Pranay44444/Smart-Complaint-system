@@ -2,12 +2,23 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UsersRepository } from './users.repository';
 import { Role } from '../common/enums/role.enum';
 
+interface CallerUser {
+  userId: string;
+  email: string;
+  role: string;
+  orgId: string | null;
+}
+
 @Injectable()
 export class UsersService {
   constructor(private readonly usersRepository: UsersRepository) {}
 
-  async findAll() {
-    return this.usersRepository.findAll();
+  async findAll(callerUser: CallerUser) {
+    return this.usersRepository.findAll(callerUser.orgId!);
+  }
+
+  async findAllByRole(role: Role, callerUser: CallerUser) {
+    return this.usersRepository.findAllByRole(role, callerUser.orgId!);
   }
 
   async findById(id: string) {
