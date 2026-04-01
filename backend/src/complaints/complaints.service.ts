@@ -10,6 +10,12 @@ import { CreateComplaintDto } from './dto/create-complaint.dto';
 import { ComplaintStatus } from '../common/enums/complaint-status.enum';
 import { Role } from '../common/enums/role.enum';
 
+interface CallerUser {
+  userId: string;
+  role: Role;
+  orgId: string | null;
+}
+
 @Injectable()
 export class ComplaintsService {
   constructor(
@@ -17,47 +23,54 @@ export class ComplaintsService {
     private readonly usersRepository: UsersRepository,
   ) {}
 
-  private async getNextStaff(): Promise<Types.ObjectId | null> {
-    const staffList = await this.usersRepository.findAllByRole(Role.STAFF);
+  private async getNextStaff(orgId: string): Promise<Types.ObjectId | null> {
+    const staffList = await this.usersRepository.findAllByRole(Role.STAFF, orgId);
     if (!staffList || staffList.length === 0) return null;
 
-    const totalComplaints = await this.complaintsRepository.countAll();
+    const totalComplaints = await this.complaintsRepository.countAll(orgId);
     const index = totalComplaints % staffList.length;
     return (staffList[index] as any)._id as Types.ObjectId;
   }
 
-  async create(dto: CreateComplaintDto, userId: string) {
-    const complaint = await this.complaintsRepository.create(dto, userId);
+  async create(dto: CreateComplaintDto, user: CallerUser) {
+    const complaintData = { ...dto, orgId: user.orgId };
+    const complaint = await this.complaintsRepository.create(complaintData as any, user.userId);
 
-    const staffId = await this.getNextStaff();
-    if (staffId) {
-      // assignTo already sets status → ASSIGNED and assignedTo
-      const updated = await this.complaintsRepository.assignTo(
-        (complaint as any)._id.toString(),
-        staffId.toString(),
-      );
-      return updated ?? complaint;
+    if (user.orgId) {
+      const staffId = await this.getNextStaff(user.orgId);
+      if (staffId) {
+        // assignTo already sets status → ASSIGNED and assignedTo
+        const updated = await this.complaintsRepository.assignTo(
+          (complaint as any)._id.toString(),
+          staffId.toString(),
+        );
+        return updated ?? complaint;
+      }
     }
 
     // Graceful fallback: no staff exists, complaint stays OPEN
     return complaint;
   }
 
-  async findAll(user: { userId: string; role: Role }) {
+  async findAll(user: CallerUser) {
     if (user.role === Role.ADMIN) {
-      return this.complaintsRepository.findAll();
+      return this.complaintsRepository.findAll(user.orgId!);
     }
     if (user.role === Role.STAFF) {
-      return this.complaintsRepository.findByAssignee(user.userId);
+      return this.complaintsRepository.findByAssignee(user.userId, user.orgId!);
     }
     // USER role — only own complaints
-    return this.complaintsRepository.findByUser(user.userId);
+    return this.complaintsRepository.findByUser(user.userId, user.orgId!);
   }
 
-  async findById(id: string, user: { userId: string; role: Role }) {
+  async findById(id: string, user: CallerUser) {
     const complaint = await this.complaintsRepository.findById(id);
     if (!complaint) {
       throw new NotFoundException(`Complaint with ID ${id} not found`);
+    }
+
+    if (user.orgId && complaint.orgId.toString() !== user.orgId) {
+      throw new ForbiddenException('Access to this complaint is denied');
     }
 
     if (user.role === Role.ADMIN) return complaint;
@@ -77,9 +90,17 @@ export class ComplaintsService {
     return complaint;
   }
 
-  async assign(id: string, staffId: string, adminUser: { userId: string; role: Role }) {
+  async assign(id: string, staffId: string, adminUser: CallerUser) {
     if (adminUser.role !== Role.ADMIN) {
       throw new ForbiddenException('Only admins can assign complaints');
+    }
+
+    const currentComplaint = await this.complaintsRepository.findById(id);
+    if (!currentComplaint) {
+      throw new NotFoundException(`Complaint with ID ${id} not found`);
+    }
+    if (adminUser.orgId && currentComplaint.orgId.toString() !== adminUser.orgId) {
+      throw new ForbiddenException('Access to this complaint is denied');
     }
 
     const staffUser = await this.usersRepository.findById(staffId);
@@ -100,7 +121,7 @@ export class ComplaintsService {
   async updateStatus(
     id: string,
     status: ComplaintStatus,
-    staffUser: { userId: string; role: Role },
+    staffUser: CallerUser,
   ) {
     if (staffUser.role !== Role.STAFF) {
       throw new ForbiddenException('Only staff can update complaint status');
@@ -116,6 +137,10 @@ export class ComplaintsService {
       throw new NotFoundException(`Complaint with ID ${id} not found`);
     }
 
+    if (staffUser.orgId && complaint.orgId.toString() !== staffUser.orgId) {
+      throw new ForbiddenException('Access to this complaint is denied');
+    }
+
     const assignedToId = (complaint.assignedTo as any)?._id?.toString()
       ?? complaint.assignedTo?.toString();
 
@@ -126,9 +151,17 @@ export class ComplaintsService {
     return this.complaintsRepository.updateStatus(id, status);
   }
 
-  async close(id: string, adminUser: { userId: string; role: Role }) {
+  async close(id: string, adminUser: CallerUser) {
     if (adminUser.role !== Role.ADMIN) {
       throw new ForbiddenException('Only admins can close complaints');
+    }
+
+    const currentComplaint = await this.complaintsRepository.findById(id);
+    if (!currentComplaint) {
+      throw new NotFoundException(`Complaint with ID ${id} not found`);
+    }
+    if (adminUser.orgId && currentComplaint.orgId.toString() !== adminUser.orgId) {
+      throw new ForbiddenException('Access to this complaint is denied');
     }
 
     const complaint = await this.complaintsRepository.updateStatus(id, ComplaintStatus.CLOSED);
