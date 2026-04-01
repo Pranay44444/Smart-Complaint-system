@@ -68,16 +68,18 @@ export class ComplaintsRepository {
     return this.complaintModel.countDocuments({ orgId: new Types.ObjectId(orgId) }).exec();
   }
 
-  async countByStatus(): Promise<{ _id: string; count: number }[]> {
+  async countByStatus(orgId: string): Promise<{ _id: string; count: number }[]> {
     return this.complaintModel.aggregate([
+      { $match: { orgId: new Types.ObjectId(orgId) } },
       { $group: { _id: '$status', count: { $sum: 1 } } },
     ]);
   }
 
-  async resolvedPerStaff(): Promise<{ staffId: string; staffName: string; staffEmail: string; count: number }[]> {
+  async resolvedPerStaff(orgId: string): Promise<{ staffId: string; staffName: string; staffEmail: string; count: number }[]> {
     return this.complaintModel.aggregate([
       {
         $match: {
+          orgId: new Types.ObjectId(orgId),
           assignedTo: { $ne: null },
           status: { $in: [ComplaintStatus.RESOLVED, ComplaintStatus.CLOSED] },
         },

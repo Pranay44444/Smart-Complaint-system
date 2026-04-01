@@ -2,12 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { ComplaintsRepository } from '../complaints/complaints.repository';
 import { ComplaintStatus } from '../common/enums/complaint-status.enum';
 
+interface CallerUser {
+  userId: string;
+  role: string;
+  orgId: string | null;
+}
+
 @Injectable()
 export class DashboardService {
   constructor(private readonly complaintsRepository: ComplaintsRepository) {}
 
-  async getSummary() {
-    const statusCounts = await this.complaintsRepository.countByStatus();
+  async getSummary(callerUser: CallerUser) {
+    const statusCounts = await this.complaintsRepository.countByStatus(callerUser.orgId!);
 
     // Build a full map with zeroes for any status not yet present
     const statusMap: Record<string, number> = {
@@ -27,7 +33,7 @@ export class DashboardService {
     return { total, byStatus: statusMap };
   }
 
-  async getStaffPerformance() {
-    return this.complaintsRepository.resolvedPerStaff();
+  async getStaffPerformance(callerUser: CallerUser) {
+    return this.complaintsRepository.resolvedPerStaff(callerUser.orgId!);
   }
 }

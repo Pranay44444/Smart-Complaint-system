@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../common/enums/role.enum';
+import { GetUser } from '../auth/decorators/get-user.decorator';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN)
@@ -12,12 +13,12 @@ export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get('summary')
-  getSummary() {
-    return this.dashboardService.getSummary();
+  getSummary(@GetUser() user: any) {
+    return this.dashboardService.getSummary(user);
   }
 
   @Get('staff-performance')
-  getStaffPerformance() {
-    return this.dashboardService.getStaffPerformance();
+  getStaffPerformance(@GetUser() user: any) {
+    return this.dashboardService.getStaffPerformance(user);
   }
 }
