@@ -26,23 +26,23 @@ export class ComplaintsRepository {
       .exec();
   }
 
-  async findAll(): Promise<Complaint[]> {
-    return this.complaintModel.find()
+  async findAll(orgId: string): Promise<Complaint[]> {
+    return this.complaintModel.find({ orgId: new Types.ObjectId(orgId) })
       .populate('createdBy', 'name email role')
       .populate('assignedTo', 'name email role')
       .sort({ createdAt: -1 })
       .exec();
   }
 
-  async findByUser(userId: string): Promise<Complaint[]> {
-    return this.complaintModel.find({ createdBy: new Types.ObjectId(userId) })
+  async findByUser(userId: string, orgId: string): Promise<Complaint[]> {
+    return this.complaintModel.find({ createdBy: new Types.ObjectId(userId), orgId: new Types.ObjectId(orgId) })
       .populate('assignedTo', 'name email role')
       .sort({ createdAt: -1 })
       .exec();
   }
 
-  async findByAssignee(assigneeId: string): Promise<Complaint[]> {
-    return this.complaintModel.find({ assignedTo: new Types.ObjectId(assigneeId) })
+  async findByAssignee(assigneeId: string, orgId: string): Promise<Complaint[]> {
+    return this.complaintModel.find({ assignedTo: new Types.ObjectId(assigneeId), orgId: new Types.ObjectId(orgId) })
       .populate('createdBy', 'name email role')
       .sort({ createdAt: -1 })
       .exec();
@@ -64,8 +64,8 @@ export class ComplaintsRepository {
     return complaint.save();
   }
 
-  async countAll(): Promise<number> {
-    return this.complaintModel.countDocuments().exec();
+  async countAll(orgId: string): Promise<number> {
+    return this.complaintModel.countDocuments({ orgId: new Types.ObjectId(orgId) }).exec();
   }
 
   async countByStatus(): Promise<{ _id: string; count: number }[]> {
