@@ -52,6 +52,14 @@ export class OrganizationsService {
     return org;
   }
 
+  async activate(id: string) {
+    const org = await this.organizationsRepository.setActive(id, true);
+    if (!org) {
+      throw new NotFoundException(`Organization with ID ${id} not found`);
+    }
+    return org;
+  }
+
   async delete(id: string) {
     const org = await this.organizationsRepository.delete(id);
     if (!org) {
