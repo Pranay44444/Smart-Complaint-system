@@ -5,12 +5,17 @@ import { UsersRepository } from '../users/users.repository';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserDocument } from '../users/schemas/user.schema';
+import { RegisterOrgDto } from './dto/register-org.dto';
+import { OrganizationsRepository } from '../organizations/organizations.repository';
+import { Role } from '../common/enums/role.enum';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly jwtService: JwtService,
+    private readonly organizationsRepository: OrganizationsRepository,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -34,6 +39,52 @@ export class AuthService {
       name: user.name,
       email: user.email,
       role: user.role,
+    };
+  }
+
+  async registerOrg(registerOrgDto: RegisterOrgDto) {
+    const { orgName, adminName, adminEmail, adminPassword } = registerOrgDto;
+
+    const existingUser = await this.usersRepository.findByEmail(adminEmail);
+    if (existingUser) {
+      throw new BadRequestException('User with this email already exists');
+    }
+
+    let slug = registerOrgDto.slug;
+    if (!slug) {
+      slug = orgName.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+    }
+
+    const existingOrg = await this.organizationsRepository.findBySlug(slug);
+    if (existingOrg) {
+      throw new BadRequestException(`Organization with slug "${slug}" already exists`);
+    }
+
+    const org = await this.organizationsRepository.create({ name: orgName, slug });
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(adminPassword, salt);
+
+    const user = (await this.usersRepository.create({
+      name: adminName,
+      email: adminEmail,
+      password: hashedPassword,
+      role: Role.ADMIN,
+      orgId: (org as any)._id as Types.ObjectId,
+    } as any)) as UserDocument;
+
+    const payload = { sub: user._id, email: user.email, role: user.role, orgId: user.orgId ?? null };
+    const accessToken = await this.jwtService.signAsync(payload);
+
+    return {
+      access_token: accessToken,
+      user: {
+        sub: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        orgId: user.orgId,
+      },
     };
   }
 
