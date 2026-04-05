@@ -25,6 +25,7 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 const getRoleHomePage = (role: string) => {
+  if (role === 'SUPER_ADMIN') return '/superadmin/dashboard';
   if (role === 'ADMIN') return '/admin/dashboard';
   if (role === 'STAFF') return '/staff/complaints';
   return '/dashboard';
