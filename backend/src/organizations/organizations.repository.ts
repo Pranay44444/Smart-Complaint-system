@@ -43,4 +43,9 @@ export class OrganizationsRepository {
   async delete(id: string): Promise<Organization | null> {
     return this.organizationModel.findByIdAndDelete(id).exec();
   }
+
+  async validateActive(id: string): Promise<boolean> {
+    const org = await this.findById(id);
+    return org ? org.isActive : false;
+  }
 }

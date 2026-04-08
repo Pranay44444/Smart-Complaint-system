@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersRepository } from '../users/users.repository';
@@ -99,6 +99,13 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (user.orgId) {
+      const isActive = await this.organizationsRepository.validateActive(user.orgId.toString());
+      if (!isActive) {
+        throw new ForbiddenException('Organization is suspended');
+      }
     }
 
     const doc = user as UserDocument;
