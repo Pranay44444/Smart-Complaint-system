@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User, UserDocument } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { Role } from '../common/enums/role.enum';
@@ -23,7 +23,7 @@ export class UsersRepository {
   }
 
   async findAll(orgId: string): Promise<User[]> {
-    return this.userModel.find({ orgId }).exec();
+    return this.userModel.find({ orgId: new Types.ObjectId(orgId) }).exec();
   }
 
   async updateRole(id: string, role: Role): Promise<User | null> {
@@ -35,6 +35,6 @@ export class UsersRepository {
   }
 
   async findAllByRole(role: Role, orgId: string): Promise<User[]> {
-    return this.userModel.find({ role, orgId }).exec();
+    return this.userModel.find({ role, orgId: new Types.ObjectId(orgId) }).exec();
   }
 }
