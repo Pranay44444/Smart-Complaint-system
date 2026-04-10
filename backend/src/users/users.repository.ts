@@ -23,7 +23,7 @@ export class UsersRepository {
   }
 
   async findAll(orgId: string): Promise<User[]> {
-    return this.userModel.find({ orgId: new Types.ObjectId(orgId) }).exec();
+    return this.userModel.find({ orgId: orgId as any }).exec();
   }
 
   async updateRole(id: string, role: Role): Promise<User | null> {
@@ -35,6 +35,6 @@ export class UsersRepository {
   }
 
   async findAllByRole(role: Role, orgId: string): Promise<User[]> {
-    return this.userModel.find({ role, orgId: new Types.ObjectId(orgId) }).exec();
+    return this.userModel.find({ role, orgId: orgId as any }).exec();
   }
 }

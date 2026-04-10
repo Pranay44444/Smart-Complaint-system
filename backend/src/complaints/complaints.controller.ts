@@ -25,14 +25,14 @@ export class ComplaintsController {
   @Roles(Role.USER)
   create(
     @Body() dto: CreateComplaintDto,
-    @GetUser() user: { userId: string; role: Role },
+    @GetUser() user: { userId: string; role: Role; orgId: string | null },
   ) {
-    return this.complaintsService.create(dto, user.userId);
+    return this.complaintsService.create(dto, user);
   }
 
   @Get()
   @Roles(Role.USER, Role.STAFF, Role.ADMIN)
-  findAll(@GetUser() user: { userId: string; role: Role }) {
+  findAll(@GetUser() user: { userId: string; role: Role; orgId: string | null }) {
     return this.complaintsService.findAll(user);
   }
 
@@ -40,7 +40,7 @@ export class ComplaintsController {
   @Roles(Role.USER, Role.STAFF, Role.ADMIN)
   findById(
     @Param('id') id: string,
-    @GetUser() user: { userId: string; role: Role },
+    @GetUser() user: { userId: string; role: Role; orgId: string | null },
   ) {
     return this.complaintsService.findById(id, user);
   }
@@ -50,7 +50,7 @@ export class ComplaintsController {
   assign(
     @Param('id') id: string,
     @Body('staffId') staffId: string,
-    @GetUser() user: { userId: string; role: Role },
+    @GetUser() user: { userId: string; role: Role; orgId: string | null },
   ) {
     return this.complaintsService.assign(id, staffId, user);
   }
@@ -60,7 +60,7 @@ export class ComplaintsController {
   updateStatus(
     @Param('id') id: string,
     @Body('status') status: ComplaintStatus,
-    @GetUser() user: { userId: string; role: Role },
+    @GetUser() user: { userId: string; role: Role; orgId: string | null },
   ) {
     return this.complaintsService.updateStatus(id, status, user);
   }
@@ -69,7 +69,7 @@ export class ComplaintsController {
   @Roles(Role.ADMIN)
   close(
     @Param('id') id: string,
-    @GetUser() user: { userId: string; role: Role },
+    @GetUser() user: { userId: string; role: Role; orgId: string | null },
   ) {
     return this.complaintsService.close(id, user);
   }
