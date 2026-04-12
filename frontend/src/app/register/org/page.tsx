@@ -33,7 +33,13 @@ export default function RegisterOrgPage() {
     try {
       setError('');
       const res = await api.post('/auth/register/org', data);
-      login(res.data.access_token, res.data.user);
+      
+      if (res.data.success || res.data.data) {
+        const payload = res.data.data || res.data;
+        login(payload.access_token, payload.user);
+      } else {
+        setError('Registration failed to complete properly.');
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed');
     }

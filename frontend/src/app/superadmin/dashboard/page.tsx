@@ -34,7 +34,7 @@ export default function SuperAdminDashboard() {
   const fetchOrganizations = async () => {
     try {
       const res = await api.get('/superadmin/orgs');
-      setOrganizations(res.data);
+      setOrganizations(res.data.data || []);
     } catch (err) {
       console.error('Failed to fetch organizations', err);
     } finally {
