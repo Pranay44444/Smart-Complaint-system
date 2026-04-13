@@ -16,7 +16,7 @@ interface Organization {
 }
 
 export default function SuperAdminDashboard() {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,8 +90,14 @@ export default function SuperAdminDashboard() {
                 <span className="text-white font-bold text-xl tracking-wider">SUPER ADMIN</span>
               </div>
             </div>
-            <div className="flex items-center">
-              <span className="text-gray-300 text-sm mr-4">{user?.email}</span>
+            <div className="flex items-center space-x-4">
+              <span className="text-gray-300 text-sm">{user?.email}</span>
+              <button
+                onClick={logout}
+                className="text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-md transition-colors"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>
