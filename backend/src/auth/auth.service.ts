@@ -102,8 +102,11 @@ export class AuthService {
     }
 
     if (user.orgId) {
-      const isActive = await this.organizationsRepository.validateActive(user.orgId.toString());
-      if (!isActive) {
+      const org = await this.organizationsRepository.findById(user.orgId.toString());
+      if (!org) {
+        throw new ForbiddenException('Organization no longer exists');
+      }
+      if (!org.isActive) {
         throw new ForbiddenException('Organization is suspended');
       }
     }
