@@ -22,7 +22,7 @@ export class ComplaintsController {
   constructor(private readonly complaintsService: ComplaintsService) {}
 
   @Post()
-  @Roles(Role.USER)
+  @Roles(Role.USER, Role.ADMIN)
   create(
     @Body() dto: CreateComplaintDto,
     @GetUser() user: { userId: string; role: Role; orgId: string | null },

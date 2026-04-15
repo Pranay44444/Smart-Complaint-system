@@ -33,19 +33,24 @@ export class ComplaintsService {
   }
 
   async create(dto: CreateComplaintDto, user: CallerUser) {
-    const complaintData = { ...dto, orgId: user.orgId };
+    if (!user.orgId) {
+      throw new ForbiddenException('Only users belonging to an organization can create complaints');
+    }
+
+    const complaintData = { 
+      ...dto, 
+      orgId: new Types.ObjectId(user.orgId) 
+    };
     const complaint = await this.complaintsRepository.create(complaintData as any, user.userId);
 
-    if (user.orgId) {
-      const staffId = await this.getNextStaff(user.orgId);
-      if (staffId) {
-        // assignTo already sets status → ASSIGNED and assignedTo
-        const updated = await this.complaintsRepository.assignTo(
-          (complaint as any)._id.toString(),
-          staffId.toString(),
-        );
-        return updated ?? complaint;
-      }
+    const staffId = await this.getNextStaff(user.orgId);
+    if (staffId) {
+      // assignTo already sets status → ASSIGNED and assignedTo
+      const updated = await this.complaintsRepository.assignTo(
+        (complaint as any)._id.toString(),
+        staffId.toString(),
+      );
+      return updated ?? complaint;
     }
 
     // Graceful fallback: no staff exists, complaint stays OPEN
