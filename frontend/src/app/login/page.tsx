@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../lib/axios';
 import Link from 'next/link';
 import { AxiosError } from 'axios';
+import { useSearchParams } from 'next/navigation';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -19,7 +20,9 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [serverError, setServerError] = useState('');
   const { login } = useAuth();
-  
+  const searchParams = useSearchParams();
+  const joinSlug = searchParams.get('join');
+
   const {
     register,
     handleSubmit,
@@ -32,7 +35,7 @@ export default function LoginPage() {
     try {
       setServerError('');
       const res = await api.post('/auth/login', data);
-      
+
       if (res.data.success) {
         const { access_token, user } = res.data.data;
         login(access_token, user);
@@ -55,12 +58,18 @@ export default function LoginPage() {
           </h2>
           <p className="mt-2 text-sm text-gray-600">
             Or{' '}
-            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
-              create a new account
-            </Link>
+            {joinSlug ? (
+              <Link href={`/join/${joinSlug}`} className="font-medium text-blue-600 hover:text-blue-500">
+                back to registration
+              </Link>
+            ) : (
+              <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
+                create a new account
+              </Link>
+            )}
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4 rounded-md shadow-sm">
             <div>

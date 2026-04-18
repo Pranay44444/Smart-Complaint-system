@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersRepository } from '../users/users.repository';
@@ -6,6 +6,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserDocument } from '../users/schemas/user.schema';
 import { RegisterOrgDto } from './dto/register-org.dto';
+import { RegisterWithOrgDto } from './dto/register-with-org.dto';
 import { OrganizationsRepository } from '../organizations/organizations.repository';
 import { Role } from '../common/enums/role.enum';
 import { Types } from 'mongoose';
@@ -86,6 +87,36 @@ export class AuthService {
         orgId: user.orgId,
       },
     };
+  }
+
+  async registerWithOrg(slug: string, dto: RegisterWithOrgDto) {
+    const org = await this.organizationsRepository.findBySlug(slug);
+    if (!org) {
+      throw new NotFoundException('Organization not found');
+    }
+    if (!(org as any).isActive) {
+      throw new ForbiddenException('Organization is suspended');
+    }
+
+    const existingUser = await this.usersRepository.findByEmail(dto.email);
+    if (existingUser) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(dto.password, salt);
+
+    const user = (await this.usersRepository.create({
+      ...dto,
+      password: hashedPassword,
+      role: Role.USER,
+      orgId: (org as any)._id as Types.ObjectId,
+    } as any)) as UserDocument;
+
+    const payload = { sub: user._id, email: user.email, role: user.role, orgId: user.orgId ?? null };
+    const token = await this.jwtService.signAsync(payload);
+
+    return token;
   }
 
   async login(loginDto: LoginDto) {

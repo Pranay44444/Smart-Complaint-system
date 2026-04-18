@@ -68,7 +68,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!loading) {
       const publicPaths = ['/login', '/register', '/register/org', '/'];
-      if (!user && !publicPaths.includes(pathname)) {
+      const isPublic = publicPaths.includes(pathname) || pathname.startsWith('/join/');
+      if (!user && !isPublic) {
         router.push('/login');
       } else if (user && (pathname === '/login' || pathname === '/register')) {
         router.push(getRoleHomePage(user.role));
