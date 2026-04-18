@@ -18,6 +18,16 @@ export class OrganizationsController {
     return this.organizationsService.findById(id);
   }
 
+  @Get(':id/members')
+  getOrgMembers(@Param('id') id: string) {
+    return this.organizationsService.getOrgMembers(id);
+  }
+
+  @Get(':id/complaints')
+  getOrgComplaints(@Param('id') id: string) {
+    return this.organizationsService.getOrgComplaints(id);
+  }
+
   @Patch(':id/suspend')
   suspend(@Param('id') id: string) {
     return this.organizationsService.suspend(id);
