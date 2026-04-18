@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ComplaintsService } from './complaints.service';
@@ -32,8 +33,19 @@ export class ComplaintsController {
 
   @Get()
   @Roles(Role.USER, Role.STAFF, Role.ADMIN)
-  findAll(@GetUser() user: { userId: string; role: Role; orgId: string | null }) {
-    return this.complaintsService.findAll(user);
+  findAll(
+    @GetUser() user: { userId: string; role: Role; orgId: string | null },
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.complaintsService.findAll(user, {
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+      search,
+      status,
+    });
   }
 
   @Get(':id')

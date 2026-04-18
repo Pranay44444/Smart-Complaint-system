@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
-import { ComplaintsRepository } from './complaints.repository';
+import { ComplaintsRepository, QueryOptions } from './complaints.repository';
 import { UsersRepository } from '../users/users.repository';
 import { CreateComplaintDto } from './dto/create-complaint.dto';
 import { ComplaintStatus } from '../common/enums/complaint-status.enum';
@@ -57,15 +57,14 @@ export class ComplaintsService {
     return complaint;
   }
 
-  async findAll(user: CallerUser) {
+  async findAll(user: CallerUser, query: QueryOptions = {}) {
     if (user.role === Role.ADMIN) {
-      return this.complaintsRepository.findAll(user.orgId!);
+      return this.complaintsRepository.findAll(user.orgId!, query);
     }
     if (user.role === Role.STAFF) {
-      return this.complaintsRepository.findByAssignee(user.userId, user.orgId!);
+      return this.complaintsRepository.findByAssignee(user.userId, user.orgId!, query);
     }
-    // USER role — only own complaints
-    return this.complaintsRepository.findByUser(user.userId, user.orgId!);
+    return this.complaintsRepository.findByUser(user.userId, user.orgId!, query);
   }
 
   async findById(id: string, user: CallerUser) {

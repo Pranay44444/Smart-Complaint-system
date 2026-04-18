@@ -5,6 +5,20 @@ import { Complaint, ComplaintDocument } from './schemas/complaint.schema';
 import { CreateComplaintDto } from './dto/create-complaint.dto';
 import { ComplaintStatus } from '../common/enums/complaint-status.enum';
 
+export interface QueryOptions {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}
+
+export interface PaginatedResult {
+  items: Complaint[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 @Injectable()
 export class ComplaintsRepository {
   constructor(
@@ -26,26 +40,82 @@ export class ComplaintsRepository {
       .exec();
   }
 
-  async findAll(orgId: string): Promise<Complaint[]> {
-    return this.complaintModel.find({ orgId: new Types.ObjectId(orgId) })
-      .populate('createdBy', 'name email role')
-      .populate('assignedTo', 'name email role')
-      .sort({ createdAt: -1 })
-      .exec();
+  async findAll(orgId: string, opts: QueryOptions = {}): Promise<PaginatedResult> {
+    const { page = 1, limit = 10, search, status } = opts;
+    const skip = (page - 1) * limit;
+
+    const query: any = { orgId: new Types.ObjectId(orgId) };
+    if (status && status !== 'ALL') query.status = status;
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const [items, total] = await Promise.all([
+      this.complaintModel.find(query)
+        .populate('createdBy', 'name email role')
+        .populate('assignedTo', 'name email role')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.complaintModel.countDocuments(query).exec(),
+    ]);
+
+    return { items, total, page, limit };
   }
 
-  async findByUser(userId: string, orgId: string): Promise<Complaint[]> {
-    return this.complaintModel.find({ createdBy: new Types.ObjectId(userId), orgId: new Types.ObjectId(orgId) })
-      .populate('assignedTo', 'name email role')
-      .sort({ createdAt: -1 })
-      .exec();
+  async findByUser(userId: string, orgId: string, opts: QueryOptions = {}): Promise<PaginatedResult> {
+    const { page = 1, limit = 10, search, status } = opts;
+    const skip = (page - 1) * limit;
+
+    const query: any = { createdBy: new Types.ObjectId(userId), orgId: new Types.ObjectId(orgId) };
+    if (status && status !== 'ALL') query.status = status;
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const [items, total] = await Promise.all([
+      this.complaintModel.find(query)
+        .populate('assignedTo', 'name email role')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.complaintModel.countDocuments(query).exec(),
+    ]);
+
+    return { items, total, page, limit };
   }
 
-  async findByAssignee(assigneeId: string, orgId: string): Promise<Complaint[]> {
-    return this.complaintModel.find({ assignedTo: new Types.ObjectId(assigneeId), orgId: new Types.ObjectId(orgId) })
-      .populate('createdBy', 'name email role')
-      .sort({ createdAt: -1 })
-      .exec();
+  async findByAssignee(assigneeId: string, orgId: string, opts: QueryOptions = {}): Promise<PaginatedResult> {
+    const { page = 1, limit = 10, search } = opts;
+    const skip = (page - 1) * limit;
+
+    const query: any = { assignedTo: new Types.ObjectId(assigneeId), orgId: new Types.ObjectId(orgId) };
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const [items, total] = await Promise.all([
+      this.complaintModel.find(query)
+        .populate('createdBy', 'name email role')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.complaintModel.countDocuments(query).exec(),
+    ]);
+
+    return { items, total, page, limit };
   }
 
   async updateStatus(id: string, status: ComplaintStatus): Promise<Complaint | null> {
