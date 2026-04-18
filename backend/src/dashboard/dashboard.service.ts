@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ComplaintsRepository } from '../complaints/complaints.repository';
 import { ComplaintStatus } from '../common/enums/complaint-status.enum';
+import { OrganizationsRepository } from '../organizations/organizations.repository';
 
 interface CallerUser {
   userId: string;
@@ -10,12 +11,14 @@ interface CallerUser {
 
 @Injectable()
 export class DashboardService {
-  constructor(private readonly complaintsRepository: ComplaintsRepository) {}
+  constructor(
+    private readonly complaintsRepository: ComplaintsRepository,
+    private readonly organizationsRepository: OrganizationsRepository,
+  ) {}
 
   async getSummary(callerUser: CallerUser) {
     const statusCounts = await this.complaintsRepository.countByStatus(callerUser.orgId!);
 
-    // Build a full map with zeroes for any status not yet present
     const statusMap: Record<string, number> = {
       [ComplaintStatus.OPEN]: 0,
       [ComplaintStatus.ASSIGNED]: 0,
@@ -35,5 +38,11 @@ export class DashboardService {
 
   async getStaffPerformance(callerUser: CallerUser) {
     return this.complaintsRepository.resolvedPerStaff(callerUser.orgId!);
+  }
+
+  async getOrgInfo(callerUser: CallerUser) {
+    const org = await this.organizationsRepository.findById(callerUser.orgId!);
+    if (!org) throw new NotFoundException('Organization not found');
+    return { name: (org as any).name, slug: (org as any).slug };
   }
 }

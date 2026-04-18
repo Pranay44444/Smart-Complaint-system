@@ -21,4 +21,9 @@ export class DashboardController {
   getStaffPerformance(@GetUser() user: any) {
     return this.dashboardService.getStaffPerformance(user);
   }
+
+  @Get('org')
+  getOrgInfo(@GetUser() user: any) {
+    return this.dashboardService.getOrgInfo(user);
+  }
 }
