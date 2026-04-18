@@ -20,7 +20,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 export default function RegisterOrgPage() {
   const { login } = useAuth();
   const [error, setError] = useState('');
-  
+
   const {
     register,
     handleSubmit,
@@ -33,7 +33,7 @@ export default function RegisterOrgPage() {
     try {
       setError('');
       const res = await api.post('/auth/register/org', data);
-      
+
       if (res.data.success || res.data.data) {
         const payload = res.data.data || res.data;
         login(payload.access_token, payload.user);
@@ -132,6 +132,12 @@ export default function RegisterOrgPage() {
             <Link href="/login" className="text-sm font-medium text-blue-600 hover:text-blue-500">
               Already have an account? Sign in
             </Link>
+          </div>
+
+          <div className="mt-4 text-center">
+            <p className="text-sm text-gray-500">
+              Are you a customer? Ask your organization for their join link.
+            </p>
           </div>
         </div>
       </div>
