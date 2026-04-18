@@ -20,6 +20,18 @@ import { GetUser } from '../auth/decorators/get-user.decorator';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Get('me')
+  @Roles(Role.USER, Role.STAFF, Role.ADMIN)
+  getMyProfile(@GetUser() user: any) {
+    return this.usersService.getMyProfile(user.userId);
+  }
+
+  @Patch('me')
+  @Roles(Role.USER, Role.STAFF, Role.ADMIN)
+  updateMyProfile(@GetUser() user: any, @Body() dto: any) {
+    return this.usersService.updateMyProfile(user.userId, dto);
+  }
+
   @Get()
   findAll(@GetUser() user: any) {
     return this.usersService.findAll(user);

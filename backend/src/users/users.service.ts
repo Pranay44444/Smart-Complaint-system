@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { UsersRepository } from './users.repository';
 import { Role } from '../common/enums/role.enum';
 
@@ -43,5 +44,31 @@ export class UsersService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
     return user;
+  }
+
+  async getMyProfile(userId: string) {
+    const user = await this.usersRepository.findById(userId) as any;
+    if (!user) throw new NotFoundException('User not found');
+    return { _id: user._id, name: user.name, email: user.email, role: user.role };
+  }
+
+  async updateMyProfile(userId: string, dto: { name?: string; currentPassword?: string; newPassword?: string }) {
+    const user = await this.usersRepository.findById(userId) as any;
+    if (!user) throw new NotFoundException('User not found');
+
+    const updates: Partial<{ name: string; password: string }> = {};
+    if (dto.name?.trim()) updates.name = dto.name.trim();
+
+    if (dto.newPassword) {
+      if (!dto.currentPassword) throw new BadRequestException('Current password is required');
+      const valid = await bcrypt.compare(dto.currentPassword, user.password);
+      if (!valid) throw new BadRequestException('Current password is incorrect');
+      updates.password = await bcrypt.hash(dto.newPassword, 10);
+    }
+
+    if (Object.keys(updates).length === 0) return { _id: user._id, name: user.name, email: user.email, role: user.role };
+
+    const updated = await this.usersRepository.updateProfile(userId, updates) as any;
+    return { _id: updated._id, name: updated.name, email: updated.email, role: updated.role };
   }
 }

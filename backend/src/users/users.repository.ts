@@ -37,4 +37,12 @@ export class UsersRepository {
   async findAllByRole(role: Role, orgId: string): Promise<User[]> {
     return this.userModel.find({ role, orgId: orgId as any }).exec();
   }
+
+  async findAdminByOrgId(orgId: string): Promise<User | null> {
+    return this.userModel.findOne({ orgId: orgId as any, role: Role.ADMIN }).exec();
+  }
+
+  async updateProfile(id: string, updates: Partial<{ name: string; password: string }>): Promise<User | null> {
+    return this.userModel.findByIdAndUpdate(id, { $set: updates }, { new: true }).exec();
+  }
 }
