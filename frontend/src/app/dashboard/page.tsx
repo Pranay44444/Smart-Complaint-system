@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 
+const PAGE_SIZE = 10;
+
 interface Complaint {
   _id: string;
   title: string;
@@ -19,10 +21,14 @@ export default function DashboardPage() {
   const { user, logout, loading } = useAuth();
   const router = useRouter();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Redirect non-USER roles to their correct home
   useEffect(() => {
     if (!loading && user) {
       if (user.role === 'ADMIN') router.replace('/admin/dashboard');
@@ -31,19 +37,33 @@ export default function DashboardPage() {
   }, [user, loading, router]);
 
   useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  useEffect(() => {
     if (!user || user.role !== 'USER') return;
-    const fetchComplaints = async () => {
-      try {
-        const res = await api.get('/complaints');
-        setComplaints(res.data.data);
-      } catch (err) {
-        setError('Failed to load complaints');
-      } finally {
-        setFetchLoading(false);
-      }
-    };
-    fetchComplaints();
-  }, [user]);
+    setFetchLoading(true);
+    const params: Record<string, string> = { page: String(page), limit: String(PAGE_SIZE) };
+    if (search) params.search = search;
+    if (statusFilter) params.status = statusFilter;
+    api.get('/complaints', { params })
+      .then(res => {
+        const payload = res.data.data;
+        setComplaints(payload.items);
+        setTotal(payload.total);
+      })
+      .catch(() => setError('Failed to load complaints'))
+      .finally(() => setFetchLoading(false));
+  }, [user, page, search, statusFilter]);
+
+  const handleStatusFilter = (s: string) => {
+    setStatusFilter(s);
+    setPage(1);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -60,6 +80,8 @@ export default function DashboardPage() {
     return <div className="p-8 text-center text-gray-500">Loading...</div>;
   }
 
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow border-b border-gray-200">
@@ -69,7 +91,9 @@ export default function DashboardPage() {
               <h1 className="text-xl font-bold text-gray-900">My Dashboard</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">{user?.name || user?.email}</span>
+              <Link href="/profile" className="text-sm text-gray-500 hover:text-gray-700">
+                {user?.name || user?.email}
+              </Link>
               <button
                 onClick={logout}
                 className="text-sm font-medium text-red-600 hover:text-red-500"
@@ -92,47 +116,99 @@ export default function DashboardPage() {
           </Link>
         </div>
 
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <input
+            type="text"
+            placeholder="Search complaints..."
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+          />
+          <select
+            title="Filter by status"
+            value={statusFilter}
+            onChange={e => handleStatusFilter(e.target.value)}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+          >
+            <option value="">All Statuses</option>
+            <option value="ASSIGNED">Assigned</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="RESOLVED">Resolved</option>
+            <option value="CLOSED">Closed</option>
+          </select>
+        </div>
+
         {fetchLoading ? (
           <p className="text-gray-500">Loading complaints...</p>
         ) : error ? (
           <p className="text-red-600">{error}</p>
         ) : complaints.length === 0 ? (
           <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500">
-            You haven&apos;t submitted any complaints yet.{' '}
-            <Link href="/complaints/new" className="text-blue-600 font-medium hover:underline">
-              Submit your first one
-            </Link>
+            {search || statusFilter ? 'No complaints match your filters.' : (
+              <>You haven&apos;t submitted any complaints yet.{' '}
+                <Link href="/complaints/new" className="text-blue-600 font-medium hover:underline">
+                  Submit your first one
+                </Link>
+              </>
+            )}
           </div>
         ) : (
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200">
-              {complaints.map((complaint) => (
-                <li key={complaint._id}>
-                  <Link href={`/complaints/${complaint._id}`} className="block hover:bg-gray-50">
-                    <div className="px-4 py-4 sm:px-6 flex items-center justify-between">
-                      <div className="flex flex-col">
-                        <p className="text-sm font-medium text-blue-600 truncate">
-                          {complaint.title}
-                        </p>
-                        <div className="mt-1 flex items-center space-x-2 text-xs text-gray-500">
-                          <span>{format(new Date(complaint.createdAt), 'MMM d, yyyy h:mm a')}</span>
-                          {complaint.assignedTo && (
-                            <>
-                              <span>•</span>
-                              <span className="font-medium text-gray-700">Assigned: {complaint.assignedTo.name || complaint.assignedTo.email}</span>
-                            </>
-                          )}
+          <>
+            <div className="bg-white shadow overflow-hidden sm:rounded-md">
+              <ul className="divide-y divide-gray-200">
+                {complaints.map((complaint) => (
+                  <li key={complaint._id}>
+                    <Link href={`/complaints/${complaint._id}`} className="block hover:bg-gray-50">
+                      <div className="px-4 py-4 sm:px-6 flex items-center justify-between">
+                        <div className="flex flex-col">
+                          <p className="text-sm font-medium text-blue-600 truncate">
+                            {complaint.title}
+                          </p>
+                          <div className="mt-1 flex items-center space-x-2 text-xs text-gray-500">
+                            <span>{format(new Date(complaint.createdAt), 'MMM d, yyyy h:mm a')}</span>
+                            {complaint.assignedTo && (
+                              <>
+                                <span>•</span>
+                                <span className="font-medium text-gray-700">Assigned: {complaint.assignedTo.name || complaint.assignedTo.email}</span>
+                              </>
+                            )}
+                          </div>
                         </div>
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(complaint.status)}`}>
+                          {complaint.status}
+                        </span>
                       </div>
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(complaint.status)}`}>
-                        {complaint.status}
-                      </span>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4">
+                <p className="text-sm text-gray-500">
+                  Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage(p => p - 1)}
+                    disabled={page === 1}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
+                  >
+                    Previous
+                  </button>
+                  <span className="px-3 py-1 text-sm text-gray-700">{page} / {totalPages}</span>
+                  <button
+                    onClick={() => setPage(p => p + 1)}
+                    disabled={page === totalPages}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

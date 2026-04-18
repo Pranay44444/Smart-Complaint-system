@@ -30,9 +30,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Link href="/admin/dashboard" className="text-sm font-medium text-gray-600 hover:text-gray-900">Dashboard</Link>
               <Link href="/admin/complaints" className="text-sm font-medium text-gray-600 hover:text-gray-900">Complaints</Link>
               <Link href="/admin/users" className="text-sm font-medium text-gray-600 hover:text-gray-900">Users</Link>
+              <Link href="/admin/staff-performance" className="text-sm font-medium text-gray-600 hover:text-gray-900">Staff Performance</Link>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">{user.name || user.email}</span>
+              <Link href="/profile" className="text-sm text-gray-500 hover:text-gray-700">{user.name || user.email}</Link>
               <button onClick={logout} className="text-sm font-medium text-red-600 hover:text-red-500">Log out</button>
             </div>
           </div>
