@@ -1,44 +1,51 @@
 'use client';
 import { useAuth } from '../../context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import Link from 'next/link';
+import { Sidebar, Topbar, PortalShell, Icons } from '../../components/ui';
 
 export default function StaffLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!loading) {
-      if (!user || user.role !== 'STAFF') {
-        router.replace('/dashboard');
-      }
+      if (!user || user.role !== 'STAFF') router.replace('/dashboard');
     }
   }, [user, loading, router]);
 
   if (loading || !user || user.role !== 'STAFF') {
-    return <div className="p-8 text-center text-gray-500">Loading staff tools...</div>;
+    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', color: 'var(--fg-tertiary)', fontSize: 14 }}>Loading staff portal…</div>;
   }
 
+  const navItems = [
+    { key: 'queue', label: 'My assignments', href: '/staff/complaints', icon: <Icons.Complaint size={16}/> },
+  ];
+
+  const activeKey = pathname.startsWith('/staff/complaints') ? 'queue' : 'queue';
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <nav className="bg-white shadow border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 justify-between items-center">
-            <div className="flex items-center space-x-8">
-              <span className="text-xl font-bold text-gray-900 border-r pr-6 border-gray-300">Staff Portal</span>
-              <Link href="/staff/complaints" className="text-sm font-medium text-gray-600 hover:text-gray-900">Assignments</Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/profile" className="text-sm text-gray-500 hover:text-gray-700">{user.name || user.email}</Link>
-              <button onClick={logout} className="text-sm font-medium text-red-600 hover:text-red-500">Log out</button>
-            </div>
-          </div>
-        </div>
-      </nav>
-      <main className="flex-1 max-w-7xl w-full mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <PortalShell sidebar={
+      <Sidebar
+        brandRole="Staff portal"
+        items={navItems}
+        activeKey={activeKey}
+        user={{ name: user.name ?? '', email: user.email ?? '', role: 'STAFF' }}
+        onLogout={logout}
+      />
+    }>
+      <Topbar
+        crumbs={['Staff', 'My assignments']}
+        right={
+          <button style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 11px', borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--fg-secondary)', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, fontFamily: 'var(--font-sans)' }}>
+            <Icons.Bell size={16}/>
+          </button>
+        }
+      />
+      <main style={{ flex: 1, padding: '28px 32px 48px' }}>
         {children}
       </main>
-    </div>
+    </PortalShell>
   );
 }
