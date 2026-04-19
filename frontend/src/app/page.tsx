@@ -1,25 +1,35 @@
 import Link from 'next/link';
+import { BrandMark } from '../components/ui';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Smart Complaint</h1>
-        <p className="text-gray-600 text-lg mb-8">The intelligent platform to manage and resolve issues.</p>
-        
-        <div className="space-y-4">
-          <Link 
-            href="/login" 
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            Login
+    <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-app)', padding: '24px 16px' }}>
+      <div style={{ textAlign: 'center', maxWidth: 420, width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+          <BrandMark size={56}/>
+        </div>
+        <h1 style={{ fontSize: 32, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--fg-primary)', margin: '0 0 8px' }}>Smart Complaint</h1>
+        <p style={{ fontSize: 16, color: 'var(--fg-tertiary)', margin: '0 0 40px', lineHeight: 1.6 }}>
+          The intelligent platform to manage and resolve complaints.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <Link href="/login" style={{
+            display: 'flex', justifyContent: 'center', padding: '11px 20px',
+            borderRadius: 'var(--radius-md)', background: 'var(--accent-500)', color: '#fff',
+            fontSize: 14, fontWeight: 600, textDecoration: 'none', letterSpacing: '-0.005em',
+            transition: 'background 120ms',
+          }}>
+            Sign in
           </Link>
-          
-          <Link 
-            href="/register/org" 
-            className="w-full flex justify-center py-3 px-4 border border-blue-600 rounded-md shadow-sm text-base font-medium text-blue-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            Register your Organization
+          <Link href="/register/org" style={{
+            display: 'flex', justifyContent: 'center', padding: '11px 20px',
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--bg-surface)', color: 'var(--fg-primary)',
+            border: '1px solid var(--border-soft)', boxShadow: 'var(--shadow-xs)',
+            fontSize: 14, fontWeight: 600, textDecoration: 'none', letterSpacing: '-0.005em',
+          }}>
+            Register your organization
           </Link>
         </div>
       </div>

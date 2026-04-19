@@ -1,26 +1,125 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Core Neutrals */
+  --bg-app:        #FAF9F7;
+  --bg-sidebar:    #F3F0EB;
+  --bg-surface:    #FFFFFF;
+  --bg-sunken:     #F6F4F0;
+  --bg-hover:      #EEEAE2;
+
+  --border-subtle: #ECE7DF;
+  --border-soft:   #E3DDD2;
+  --border-strong: #C9C0B0;
+
+  --fg-primary:    #1A1714;
+  --fg-secondary:  #4A433B;
+  --fg-tertiary:   #7A7267;
+  --fg-quaternary: #A69C8D;
+  --fg-on-accent:  #FFFFFF;
+
+  /* Accent — Terracotta */
+  --accent-50:  #FBF2EE;
+  --accent-100: #F4DFD4;
+  --accent-200: #ECC5B2;
+  --accent-300: #E0A488;
+  --accent-400: #D48362;
+  --accent-500: #C96442;
+  --accent-600: #B0522F;
+  --accent-700: #8E4024;
+  --accent-800: #6E321C;
+  --accent-900: #4E2315;
+
+  --accent:        var(--accent-500);
+  --accent-hover:  var(--accent-600);
+  --accent-press:  var(--accent-700);
+  --accent-soft:   var(--accent-50);
+  --accent-ring:   rgb(201 100 66 / 0.18);
+
+  /* Status Colors */
+  --status-open-bg:     #F7EBCC;
+  --status-open-fg:     #7A5814;
+  --status-open-dot:    #C9941E;
+  --status-assigned-bg: #E2E5EA;
+  --status-assigned-fg: #3B4657;
+  --status-assigned-dot:#5E6E84;
+  --status-progress-bg: #E6DEEA;
+  --status-progress-fg: #574467;
+  --status-progress-dot:#7C5C7A;
+  --status-resolved-bg: #DDE5D8;
+  --status-resolved-fg: #3F5033;
+  --status-resolved-dot:#5E7A4C;
+  --status-closed-bg:   #E7E2D8;
+  --status-closed-fg:   #5B5446;
+  --status-closed-dot:  #8A8172;
+  --status-suspended-bg:#EFD7D4;
+  --status-suspended-fg:#7A3A34;
+  --status-suspended-dot:#B05A50;
+
+  /* Feedback */
+  --success:    #5E7A4C;
+  --success-bg: #DDE5D8;
+  --warning:    #B88217;
+  --warning-bg: #F7EBCC;
+  --danger:     #A7473C;
+  --danger-bg:  #EFD7D4;
+  --info:       #5E6E84;
+  --info-bg:    #E2E5EA;
+
+  /* Radii */
+  --radius-xs:   6px;
+  --radius-sm:   8px;
+  --radius-md:   10px;
+  --radius-lg:   12px;
+  --radius-xl:   14px;
+  --radius-2xl:  20px;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-xs:  0 1px 2px rgb(60 42 22 / 0.04);
+  --shadow-sm:  0 1px 2px rgb(60 42 22 / 0.05), 0 1px 3px rgb(60 42 22 / 0.04);
+  --shadow-md:  0 2px 4px rgb(60 42 22 / 0.05), 0 4px 12px rgb(60 42 22 / 0.05);
+  --shadow-lg:  0 6px 16px rgb(60 42 22 / 0.07), 0 2px 6px rgb(60 42 22 / 0.04);
+  --shadow-xl:  0 16px 40px rgb(60 42 22 / 0.10), 0 4px 10px rgb(60 42 22 / 0.05);
+  --shadow-focus: 0 0 0 3px var(--accent-ring);
+  --shadow-inner: inset 0 1px 2px rgb(60 42 22 / 0.04);
+
+  /* Typography */
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, -apple-system, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Motion */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-in-out:    cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast:  120ms;
+  --dur-base:  180ms;
+  --dur-slow:  260ms;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--bg-app);
+  --color-foreground: var(--fg-primary);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-app);
+  color: var(--fg-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+::selection { background: var(--accent-100); color: var(--accent-800); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-soft); border-radius: 999px; border: 2px solid var(--bg-app); }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
