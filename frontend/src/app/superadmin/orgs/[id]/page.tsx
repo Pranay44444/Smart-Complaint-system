@@ -1,54 +1,19 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '../../../../context/AuthContext';
 import api from '../../../../lib/axios';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { Sidebar, Topbar, PortalShell, KpiCard, TableWrap, TH, TD, TR, StatusPill, Avatar, RoleBadge, Icons, Card } from '../../../../components/ui';
 
-interface Member {
-  _id: string;
-  name: string;
-  email: string;
-  role: string;
-  createdAt: string;
-}
-
-interface Complaint {
-  _id: string;
-  title: string;
-  status: string;
-  createdAt: string;
-  createdBy?: { name?: string; email?: string };
-  assignedTo?: { name?: string; email?: string } | null;
-}
-
-interface OrgDetail {
-  _id: string;
-  name: string;
-  slug: string;
-  isActive: boolean;
-  createdAt: string;
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  OPEN: 'bg-yellow-100 text-yellow-800',
-  ASSIGNED: 'bg-blue-100 text-blue-800',
-  IN_PROGRESS: 'bg-purple-100 text-purple-800',
-  RESOLVED: 'bg-green-100 text-green-800',
-  CLOSED: 'bg-gray-100 text-gray-800',
-};
-
-const ROLE_COLORS: Record<string, string> = {
-  ADMIN: 'bg-red-100 text-red-800',
-  STAFF: 'bg-blue-100 text-blue-800',
-  USER: 'bg-gray-100 text-gray-800',
-};
+interface Member { _id: string; name: string; email: string; role: string; createdAt: string; }
+interface Complaint { _id: string; title: string; status: string; createdAt: string; createdBy?: { name?: string; email?: string }; assignedTo?: { name?: string; email?: string } | null; }
+interface OrgDetail { _id: string; name: string; slug: string; isActive: boolean; createdAt: string; }
 
 export default function OrgDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
 
   const [org, setOrg] = useState<OrgDetail | null>(null);
@@ -59,10 +24,7 @@ export default function OrgDetailPage() {
 
   useEffect(() => {
     if (!loading) {
-      if (!user || user.role !== 'SUPER_ADMIN') {
-        router.push('/login');
-        return;
-      }
+      if (!user || user.role !== 'SUPER_ADMIN') { router.push('/login'); return; }
       loadAll();
     }
   }, [user, loading]);
@@ -77,145 +39,99 @@ export default function OrgDetailPage() {
       setOrg(orgRes.data.data);
       setMembers(membersRes.data.data);
       setComplaints(complaintsRes.data.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setIsLoading(false); }
   };
 
-  if (loading || isLoading) return <div className="p-8 text-center text-gray-500">Loading...</div>;
-  if (!org) return <div className="p-8 text-center text-red-600">Organization not found.</div>;
+  if (loading || isLoading) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', color: 'var(--fg-tertiary)', fontSize: 14 }}>Loading…</div>;
+  if (!org) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', color: 'var(--danger)', fontSize: 14 }}>Organization not found.</div>;
 
-  const adminCount = members.filter(m => m.role === 'ADMIN').length;
-  const staffCount = members.filter(m => m.role === 'STAFF').length;
-  const userCount = members.filter(m => m.role === 'USER').length;
+  const navItems = [
+    { key: 'orgs', label: 'Organizations', href: '/superadmin/dashboard', icon: <Icons.Org size={16}/> },
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-gray-800 mb-8 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-16 items-center">
-          <div className="flex items-center gap-4">
-            <Link href="/superadmin/dashboard" className="text-gray-400 hover:text-white text-sm">
-              ← Back
-            </Link>
-            <span className="text-white font-bold text-xl tracking-wider">SUPER ADMIN</span>
-          </div>
-          <span className="text-gray-300 text-sm">{user?.email}</span>
-        </div>
-      </nav>
+    <PortalShell sidebar={
+      <Sidebar brandRole="Super admin" items={navItems} activeKey="orgs"
+        user={{ name: user?.name ?? '', email: user?.email ?? '', role: 'SUPER_ADMIN' }} onLogout={logout}/>
+    }>
+      <Topbar crumbs={['Platform', 'Organizations', org.name]}/>
+      <main style={{ flex: 1, padding: '28px 32px 48px' }}>
+        <Link href="/superadmin/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--fg-tertiary)', textDecoration: 'none', marginBottom: 20, fontWeight: 500 }}>
+          <Icons.ChevLeft size={14}/> Back to organizations
+        </Link>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        {/* Org Header */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{org.name}</h1>
-            <p className="text-sm text-gray-500 mt-1">/{org.slug}</p>
-            <p className="text-xs text-gray-400 mt-1">Created {format(new Date(org.createdAt), 'MMM d, yyyy')}</p>
-          </div>
-          <span className={`px-3 py-1 text-sm font-semibold rounded-full ${org.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-            {org.isActive ? 'Active' : 'Suspended'}
-          </span>
-        </div>
-
-        {/* Stats Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-          {[
-            { label: 'Total Members', value: members.length, color: 'text-gray-900' },
-            { label: 'Admins', value: adminCount, color: 'text-red-600' },
-            { label: 'Staff', value: staffCount, color: 'text-blue-600' },
-            { label: 'Users', value: userCount, color: 'text-gray-600' },
-          ].map(stat => (
-            <div key={stat.label} className="bg-white rounded-lg shadow p-4">
-              <p className="text-xs text-gray-500">{stat.label}</p>
-              <p className={`text-2xl font-bold mt-1 ${stat.color}`}>{stat.value}</p>
+        {/* Org header */}
+        <Card hero style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <div>
+              <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--fg-primary)', margin: '0 0 4px' }}>{org.name}</h1>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--fg-tertiary)' }}>/{org.slug}</span>
+              <p style={{ fontSize: 13, color: 'var(--fg-tertiary)', margin: '6px 0 0' }}>Created {format(new Date(org.createdAt), 'MMM d, yyyy')}</p>
             </div>
-          ))}
+            <StatusPill status={org.isActive ? 'ACTIVE' : 'SUSPENDED'}/>
+          </div>
+        </Card>
+
+        {/* Stats */}
+        <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', marginBottom: 24 }}>
+          <KpiCard label="Total members" value={members.length}/>
+          <KpiCard label="Admins"  value={members.filter(m => m.role === 'ADMIN').length}  valueColor="var(--accent-600)"/>
+          <KpiCard label="Staff"   value={members.filter(m => m.role === 'STAFF').length}  valueColor="var(--info)"/>
+          <KpiCard label="Users"   value={members.filter(m => m.role === 'USER').length}   valueColor="var(--fg-tertiary)"/>
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="border-b border-gray-200">
-            <nav className="flex -mb-px">
-              {(['members', 'complaints'] as const).map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-6 py-3 text-sm font-medium capitalize border-b-2 transition-colors ${
-                    activeTab === tab
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  {tab} {tab === 'members' ? `(${members.length})` : `(${complaints.length})`}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          {activeTab === 'members' && (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {members.length === 0 ? (
-                  <tr><td colSpan={4} className="px-6 py-8 text-center text-sm text-gray-500">No members yet.</td></tr>
-                ) : members.map(m => (
-                  <tr key={m._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{m.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{m.email}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${ROLE_COLORS[m.role] ?? 'bg-gray-100 text-gray-800'}`}>
-                        {m.role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {m.createdAt ? format(new Date(m.createdAt), 'MMM d, yyyy') : '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-
-          {activeTab === 'complaints' && (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Submitted By</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assigned To</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {complaints.length === 0 ? (
-                  <tr><td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">No complaints yet.</td></tr>
-                ) : complaints.map(c => (
-                  <tr key={c._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{c.title}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{c.createdBy?.name || c.createdBy?.email || '—'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{c.assignedTo?.name || c.assignedTo?.email || <span className="text-gray-400">Unassigned</span>}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{format(new Date(c.createdAt), 'MMM d, yyyy')}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${STATUS_COLORS[c.status] ?? 'bg-gray-100 text-gray-800'}`}>
-                        {c.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+        <div style={{ display: 'inline-flex', gap: 4, padding: 3, background: 'var(--bg-sunken)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', marginBottom: 16 }}>
+          {(['members', 'complaints'] as const).map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)} style={{
+              padding: '5px 14px', fontSize: 13, borderRadius: 7, border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', fontWeight: 500,
+              background: activeTab === tab ? 'var(--bg-surface)' : 'transparent',
+              color: activeTab === tab ? 'var(--fg-primary)' : 'var(--fg-tertiary)',
+              boxShadow: activeTab === tab ? 'var(--shadow-xs)' : 'none',
+            }}>
+              {tab === 'members' ? `Members (${members.length})` : `Complaints (${complaints.length})`}
+            </button>
+          ))}
         </div>
-      </div>
-    </div>
+
+        <TableWrap>
+          {activeTab === 'members' ? (
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+              <thead><tr><TH>Name</TH><TH>Email</TH><TH>Role</TH><TH>Joined</TH></tr></thead>
+              <tbody>
+                {members.length === 0 ? (
+                  <tr><td colSpan={4} style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--fg-tertiary)' }}>No members yet.</td></tr>
+                ) : members.map(m => (
+                  <TR key={m._id}>
+                    <TD strong><div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Avatar name={m.name || m.email} role={m.role}/><span>{m.name}</span></div></TD>
+                    <TD mono>{m.email}</TD>
+                    <TD><RoleBadge role={m.role}/></TD>
+                    <TD muted>{m.createdAt ? format(new Date(m.createdAt), 'MMM d, yyyy') : '—'}</TD>
+                  </TR>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+              <thead><tr><TH>Title</TH><TH>Submitted by</TH><TH>Assigned to</TH><TH>Date</TH><TH>Status</TH></tr></thead>
+              <tbody>
+                {complaints.length === 0 ? (
+                  <tr><td colSpan={5} style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--fg-tertiary)' }}>No complaints yet.</td></tr>
+                ) : complaints.map(c => (
+                  <TR key={c._id}>
+                    <TD strong>{c.title}</TD>
+                    <TD>{c.createdBy?.name || c.createdBy?.email || '—'}</TD>
+                    <TD muted>{c.assignedTo?.name || c.assignedTo?.email || 'Unassigned'}</TD>
+                    <TD mono muted>{format(new Date(c.createdAt), 'MMM d, yyyy')}</TD>
+                    <TD><StatusPill status={c.status}/></TD>
+                  </TR>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </TableWrap>
+      </main>
+    </PortalShell>
   );
 }

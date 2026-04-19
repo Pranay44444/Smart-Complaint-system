@@ -1,14 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
 import api from '../../../lib/axios';
+import { TableWrap, TH, TD, TR, Avatar, RoleBadge } from '../../../components/ui';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  useEffect(() => { fetchUsers(); }, []);
 
   const fetchUsers = async () => {
     try {
@@ -30,48 +29,51 @@ export default function AdminUsersPage() {
     }
   };
 
-  if (loading) return <p className="text-gray-500">Loading users...</p>;
+  if (loading) return <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--fg-tertiary)' }}>Loading users…</div>;
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">User Management</h1>
-      <div className="bg-white shadow overflow-hidden rounded-lg border border-gray-200">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-            </tr>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--fg-primary)', margin: '0 0 4px' }}>Team &amp; users</h1>
+        <p style={{ fontSize: 14, color: 'var(--fg-tertiary)', margin: 0 }}>Manage staff and end-user accounts for your organization.</p>
+      </div>
+
+      <TableWrap>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+          <thead>
+            <tr><TH>Name</TH><TH>Email</TH><TH>Role</TH><TH>Joined</TH><TH right>Change role</TH></tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {users.map(u => (
-              <tr key={u._id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{u.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{u.email}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${u.role === 'ADMIN' ? 'bg-red-100 text-red-800' : u.role === 'STAFF' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
-                    {u.role}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <select 
-                    title="Change user role"
-                    className="border border-gray-300 rounded text-sm py-1.5 focus:ring-blue-500 focus:border-blue-500"
+          <tbody>
+            {users.length === 0 ? (
+              <tr><td colSpan={5} style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--fg-tertiary)' }}>No users found.</td></tr>
+            ) : users.map(u => (
+              <TR key={u._id}>
+                <TD strong>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <Avatar name={u.name || u.email} role={u.role}/>
+                    <span>{u.name || '—'}</span>
+                  </div>
+                </TD>
+                <TD mono>{u.email}</TD>
+                <TD><RoleBadge role={u.role}/></TD>
+                <TD muted>{u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}</TD>
+                <TD right>
+                  <select
+                    title="Change role"
                     value={u.role}
                     onChange={e => handleRoleChange(u._id, e.target.value)}
+                    style={{ fontFamily: 'var(--font-sans)', fontSize: 12.5, padding: '5px 10px', borderRadius: 8, border: '1px solid var(--border-soft)', background: 'var(--bg-surface)', color: 'var(--fg-primary)', outline: 'none', cursor: 'pointer' }}
                   >
                     <option value="USER">USER</option>
                     <option value="STAFF">STAFF</option>
                     <option value="ADMIN">ADMIN</option>
                   </select>
-                </td>
-              </tr>
+                </TD>
+              </TR>
             ))}
           </tbody>
         </table>
-      </div>
+      </TableWrap>
     </div>
   );
 }

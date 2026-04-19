@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import api from '../../../lib/axios';
+import { TableWrap, TH, TD, TR, Avatar, KpiCard } from '../../../components/ui';
 
 interface StaffStat {
   staffId: string;
@@ -21,47 +22,67 @@ export default function StaffPerformancePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p className="text-gray-500">Loading performance data...</p>;
-  if (error) return <p className="text-red-600">{error}</p>;
+  if (loading) return <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--fg-tertiary)' }}>Loading performance data…</div>;
+  if (error) return <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--danger)' }}>{error}</div>;
+
+  const topCount = stats[0]?.count ?? 0;
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Staff Performance</h1>
-      <p className="text-sm text-gray-500 mb-4">Complaints resolved or closed per staff member.</p>
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--fg-primary)', margin: '0 0 4px' }}>Staff performance</h1>
+        <p style={{ fontSize: 14, color: 'var(--fg-tertiary)', margin: 0 }}>Resolution throughput per staff member.</p>
+      </div>
+
+      {stats.length > 0 && (
+        <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', marginBottom: 24 }}>
+          <KpiCard label="Staff members" value={stats.length}/>
+          <KpiCard label="Top resolver" value={stats[0]?.staffName?.split(' ')[0] ?? '—'} valueColor="var(--accent-600)"/>
+          <KpiCard label="Top count" value={topCount} valueColor="var(--status-resolved-fg)" deltaKind="up"/>
+        </div>
+      )}
 
       {stats.length === 0 ? (
-        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500">
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', padding: '48px 24px', textAlign: 'center', color: 'var(--fg-tertiary)' }}>
           No resolved or closed complaints yet.
         </div>
       ) : (
-        <div className="bg-white shadow overflow-hidden rounded-lg border border-gray-200">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff Member</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resolved / Closed</th>
-              </tr>
+        <TableWrap>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+            <thead>
+              <tr><TH>Rank</TH><TH>Staff member</TH><TH>Email</TH><TH>Resolved / closed</TH><TH>Load</TH></tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody>
               {stats.map((s, i) => (
-                <tr key={s.staffId} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">#{i + 1}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {s.staffName || '—'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{s.staffEmail}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-3 py-1 inline-flex text-sm font-bold rounded-full bg-green-100 text-green-800">
+                <TR key={s.staffId}>
+                  <TD mono muted>#{i + 1}</TD>
+                  <TD strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <Avatar name={s.staffName || s.staffEmail} role="STAFF"/>
+                      <span>{s.staffName || '—'}</span>
+                    </div>
+                  </TD>
+                  <TD mono>{s.staffEmail}</TD>
+                  <TD>
+                    <span style={{ padding: '3px 10px', borderRadius: 'var(--radius-pill)', background: 'var(--status-resolved-bg)', color: 'var(--status-resolved-fg)', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 600 }}>
                       {s.count}
                     </span>
-                  </td>
-                </tr>
+                  </TD>
+                  <TD>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 140 }}>
+                      <div style={{ flex: 1, height: 6, background: 'var(--bg-sunken)', borderRadius: 999, overflow: 'hidden' }}>
+                        <span style={{ display: 'block', height: '100%', width: `${topCount > 0 ? Math.round((s.count / topCount) * 100) : 0}%`, background: 'var(--accent-500)', borderRadius: 999 }}/>
+                      </div>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--fg-tertiary)', width: 36, textAlign: 'right' }}>
+                        {topCount > 0 ? Math.round((s.count / topCount) * 100) : 0}%
+                      </span>
+                    </div>
+                  </TD>
+                </TR>
               ))}
             </tbody>
           </table>
-        </div>
+        </TableWrap>
       )}
     </div>
   );

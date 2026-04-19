@@ -1,19 +1,23 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../lib/axios';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
+import { BrandMark, Avatar, KpiCard, TableWrap, TH, TD, TR, StatusPill, SearchWrap, Segmented, Pagination, Icons, Btn } from '../../components/ui';
 
 const PAGE_SIZE = 10;
+const STATUS_OPTS = [
+  { label: 'All', value: '' },
+  { label: 'ASSIGNED', value: 'ASSIGNED' },
+  { label: 'IN_PROGRESS', value: 'IN_PROGRESS' },
+  { label: 'RESOLVED', value: 'RESOLVED' },
+  { label: 'CLOSED', value: 'CLOSED' },
+];
 
 interface Complaint {
-  _id: string;
-  title: string;
-  status: string;
-  createdAt: string;
+  _id: string; title: string; status: string; createdAt: string;
   assignedTo?: { name?: string; email?: string } | null;
 }
 
@@ -28,19 +32,35 @@ export default function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState('');
+  const [summary, setSummary] = useState({ assigned: 0, inProgress: 0, resolved: 0, closed: 0 });
+
+  useEffect(() => {
+    if (!user || user.role !== 'USER') return;
+    Promise.all([
+      api.get('/complaints', { params: { limit: 1, status: 'ASSIGNED' } }),
+      api.get('/complaints', { params: { limit: 1, status: 'IN_PROGRESS' } }),
+      api.get('/complaints', { params: { limit: 1, status: 'RESOLVED' } }),
+      api.get('/complaints', { params: { limit: 1, status: 'CLOSED' } }),
+    ]).then(([a, ip, r, c]) => {
+      setSummary({
+        assigned: a.data.data.total ?? 0,
+        inProgress: ip.data.data.total ?? 0,
+        resolved: r.data.data.total ?? 0,
+        closed: c.data.data.total ?? 0,
+      });
+    }).catch(() => {});
+  }, [user]);
 
   useEffect(() => {
     if (!loading && user) {
       if (user.role === 'ADMIN') router.replace('/admin/dashboard');
       else if (user.role === 'STAFF') router.replace('/staff/complaints');
+      else if (user.role === 'SUPER_ADMIN') router.replace('/superadmin/dashboard');
     }
   }, [user, loading, router]);
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      setSearch(searchInput);
-      setPage(1);
-    }, 300);
+    const t = setTimeout(() => { setSearch(searchInput); setPage(1); }, 300);
     return () => clearTimeout(t);
   }, [searchInput]);
 
@@ -60,154 +80,89 @@ export default function DashboardPage() {
       .finally(() => setFetchLoading(false));
   }, [user, page, search, statusFilter]);
 
-  const handleStatusFilter = (s: string) => {
-    setStatusFilter(s);
-    setPage(1);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'OPEN': return 'bg-yellow-100 text-yellow-800';
-      case 'ASSIGNED': return 'bg-blue-100 text-blue-800';
-      case 'IN_PROGRESS': return 'bg-purple-100 text-purple-800';
-      case 'RESOLVED': return 'bg-green-100 text-green-800';
-      case 'CLOSED': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-50 text-gray-500';
-    }
-  };
-
   if (loading || !user || user.role !== 'USER') {
-    return <div className="p-8 text-center text-gray-500">Loading...</div>;
+    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', color: 'var(--fg-tertiary)', fontSize: 14 }}>Loading…</div>;
   }
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900">My Dashboard</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/profile" className="text-sm text-gray-500 hover:text-gray-700">
-                {user?.name || user?.email}
-              </Link>
-              <button
-                onClick={logout}
-                className="text-sm font-medium text-red-600 hover:text-red-500"
-              >
-                Log out
-              </button>
-            </div>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-app)', display: 'flex', flexDirection: 'column' }}>
+      {/* Top nav */}
+      <nav style={{ height: 64, background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 14, padding: '0 28px', position: 'sticky', top: 0, zIndex: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <BrandMark size={28}/>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            <span style={{ fontWeight: 700, fontSize: 14, letterSpacing: '-0.015em', color: 'var(--fg-primary)' }}>Smart Complaint</span>
+            <span style={{ fontSize: 10.5, color: 'var(--fg-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Customer portal</span>
           </div>
         </div>
+        <div style={{ flex: 1 }}/>
+        <Link href="/profile" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none', padding: '4px 8px', borderRadius: 8, transition: 'background 120ms' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+        >
+          <span style={{ fontSize: 13, color: 'var(--fg-tertiary)' }}>{user.name || user.email}</span>
+          <Avatar name={user.name ?? user.email ?? ''} role="USER"/>
+        </Link>
+        <button onClick={logout} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 11px', borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--fg-secondary)', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, fontFamily: 'var(--font-sans)' }}>
+          <Icons.Logout size={14}/>
+        </button>
       </nav>
 
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">My Complaints</h2>
-          <Link
-            href="/complaints/new"
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            + New Complaint
-          </Link>
+      <main style={{ flex: 1, maxWidth: 1040, width: '100%', margin: '0 auto', padding: '28px 24px 48px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div>
+            <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--fg-primary)', margin: '0 0 4px' }}>Your complaints</h1>
+            <p style={{ fontSize: 14, color: 'var(--fg-tertiary)', margin: 0 }}>Track the status of issues you've raised.</p>
+          </div>
+          <Btn variant="primary" href="/complaints/new"><Icons.Plus size={14}/>New complaint</Btn>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 mb-4">
-          <input
-            type="text"
-            placeholder="Search complaints..."
-            value={searchInput}
-            onChange={e => setSearchInput(e.target.value)}
-            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-          />
-          <select
-            title="Filter by status"
-            value={statusFilter}
-            onChange={e => handleStatusFilter(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
-          >
-            <option value="">All Statuses</option>
-            <option value="ASSIGNED">Assigned</option>
-            <option value="IN_PROGRESS">In Progress</option>
-            <option value="RESOLVED">Resolved</option>
-            <option value="CLOSED">Closed</option>
-          </select>
+        <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', marginBottom: 24 }}>
+          <KpiCard label="Assigned"    value={summary.assigned}   valueColor="var(--status-assigned-fg)"/>
+          <KpiCard label="In progress" value={summary.inProgress} valueColor="var(--status-progress-fg)"/>
+          <KpiCard label="Resolved"    value={summary.resolved}   valueColor="var(--status-resolved-fg)" deltaKind="up"/>
+          <KpiCard label="Closed"      value={summary.closed}  valueColor="var(--status-closed-fg)"/>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 16 }}>
+          <SearchWrap value={searchInput} onChange={setSearchInput} placeholder="Search complaints…"/>
+          <Segmented options={STATUS_OPTS} value={statusFilter} onChange={v => { setStatusFilter(v); setPage(1); }}/>
         </div>
 
         {fetchLoading ? (
-          <p className="text-gray-500">Loading complaints...</p>
+          <div style={{ padding: '32px', textAlign: 'center', color: 'var(--fg-tertiary)' }}>Loading complaints…</div>
         ) : error ? (
-          <p className="text-red-600">{error}</p>
+          <div style={{ padding: '32px', textAlign: 'center', color: 'var(--danger)' }}>{error}</div>
         ) : complaints.length === 0 ? (
-          <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-500">
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', padding: '48px 24px', textAlign: 'center', color: 'var(--fg-tertiary)', fontSize: 14 }}>
             {search || statusFilter ? 'No complaints match your filters.' : (
-              <>You haven&apos;t submitted any complaints yet.{' '}
-                <Link href="/complaints/new" className="text-blue-600 font-medium hover:underline">
-                  Submit your first one
-                </Link>
+              <>You haven't submitted any complaints yet.{' '}
+                <Link href="/complaints/new" style={{ color: 'var(--accent-600)', fontWeight: 500 }}>Submit your first one</Link>
               </>
             )}
           </div>
         ) : (
           <>
-            <div className="bg-white shadow overflow-hidden sm:rounded-md">
-              <ul className="divide-y divide-gray-200">
-                {complaints.map((complaint) => (
-                  <li key={complaint._id}>
-                    <Link href={`/complaints/${complaint._id}`} className="block hover:bg-gray-50">
-                      <div className="px-4 py-4 sm:px-6 flex items-center justify-between">
-                        <div className="flex flex-col">
-                          <p className="text-sm font-medium text-blue-600 truncate">
-                            {complaint.title}
-                          </p>
-                          <div className="mt-1 flex items-center space-x-2 text-xs text-gray-500">
-                            <span>{format(new Date(complaint.createdAt), 'MMM d, yyyy h:mm a')}</span>
-                            {complaint.assignedTo && (
-                              <>
-                                <span>•</span>
-                                <span className="font-medium text-gray-700">Assigned: {complaint.assignedTo.name || complaint.assignedTo.email}</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(complaint.status)}`}>
-                          {complaint.status}
-                        </span>
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-4">
-                <p className="text-sm text-gray-500">
-                  Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total}
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setPage(p => p - 1)}
-                    disabled={page === 1}
-                    className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
-                  >
-                    Previous
-                  </button>
-                  <span className="px-3 py-1 text-sm text-gray-700">{page} / {totalPages}</span>
-                  <button
-                    onClick={() => setPage(p => p + 1)}
-                    disabled={page === totalPages}
-                    className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-50"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            )}
+            <TableWrap>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13.5 }}>
+                <thead><tr><TH>Subject</TH><TH>Assignee</TH><TH>Date</TH><TH>Status</TH></tr></thead>
+                <tbody>
+                  {complaints.map(c => (
+                    <TR key={c._id} onClick={() => router.push(`/complaints/${c._id}`)}>
+                      <TD strong>
+                        <Link href={`/complaints/${c._id}`} style={{ color: 'var(--fg-primary)', textDecoration: 'none', fontWeight: 500 }}>{c.title}</Link>
+                      </TD>
+                      <TD muted>{c.assignedTo?.name || c.assignedTo?.email || 'Not yet assigned'}</TD>
+                      <TD mono muted>{format(new Date(c.createdAt), 'MMM d, yyyy')}</TD>
+                      <TD><StatusPill status={c.status}/></TD>
+                    </TR>
+                  ))}
+                </tbody>
+              </table>
+            </TableWrap>
+            <Pagination page={page} totalPages={totalPages} onPrev={() => setPage(p => p - 1)} onNext={() => setPage(p => p + 1)} total={total} pageSize={PAGE_SIZE}/>
           </>
         )}
       </main>
