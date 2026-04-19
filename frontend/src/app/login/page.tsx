@@ -32,6 +32,8 @@ function LoginForm() {
       const res = await api.post('/auth/login', data);
       if (res.data.success) {
         const { access_token, user } = res.data.data;
+        const slug = joinSlug || user.orgSlug;
+        if (slug) localStorage.setItem('orgSlug', slug);
         login(access_token, user);
       }
     } catch (err) {

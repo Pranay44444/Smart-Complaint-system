@@ -8,6 +8,7 @@ export interface User {
   email: string;
   name?: string;
   role: string;
+  orgSlug?: string | null;
 }
 
 export interface AuthContextType {
@@ -45,7 +46,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (token && storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsed = JSON.parse(storedUser);
+        setUser(parsed);
+        if (parsed.orgSlug) localStorage.setItem('orgSlug', parsed.orgSlug);
       } catch (e) {
         // failed to parse
       }
@@ -56,15 +59,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = (token: string, userData: User) => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(userData));
+    if (userData.orgSlug) localStorage.setItem('orgSlug', userData.orgSlug);
+    else localStorage.removeItem('orgSlug');
     setUser(userData);
     router.push(getRoleHomePage(userData.role));
   };
 
   const logout = () => {
+    const orgSlug = user?.orgSlug || localStorage.getItem('orgSlug');
+    const role = user?.role;
+    const needsJoinContext = role === 'USER' || role === 'STAFF';
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    if (!needsJoinContext) localStorage.removeItem('orgSlug');
     setUser(null);
-    router.push('/login');
+    router.push(needsJoinContext && orgSlug ? `/login?join=${orgSlug}` : '/login');
   };
 
   const updateUser = (updates: Partial<User>) => {
@@ -79,7 +88,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const publicPaths = ['/login', '/register', '/register/org', '/'];
       const isPublic = publicPaths.includes(pathname) || pathname.startsWith('/join/');
       if (!user && !isPublic) {
-        router.push('/login');
+        const orgSlug = localStorage.getItem('orgSlug');
+        router.push(orgSlug ? `/login?join=${orgSlug}` : '/login');
       } else if (user && (pathname === '/login' || pathname === '/register')) {
         router.push(getRoleHomePage(user.role));
       }

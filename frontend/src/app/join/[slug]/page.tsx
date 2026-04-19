@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -30,6 +30,10 @@ export default function JoinOrgPage() {
   const { login } = useAuth();
   const [serverError, setServerError] = useState('');
 
+  useEffect(() => {
+    if (slug) localStorage.setItem('orgSlug', slug);
+  }, [slug]);
+
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
   });
@@ -41,7 +45,7 @@ export default function JoinOrgPage() {
       if (res.data.success) {
         const token = res.data.data.token;
         const payload = decodeJwtPayload(token);
-        login(token, { sub: payload.sub, email: payload.email, role: payload.role });
+        login(token, { sub: payload.sub, email: payload.email, role: payload.role, orgSlug: slug });
       }
     } catch (err) {
       if (err instanceof AxiosError) {

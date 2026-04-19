@@ -8,6 +8,7 @@ import { UserDocument } from '../users/schemas/user.schema';
 import { RegisterOrgDto } from './dto/register-org.dto';
 import { RegisterWithOrgDto } from './dto/register-with-org.dto';
 import { OrganizationsRepository } from '../organizations/organizations.repository';
+import { OrganizationDocument } from '../organizations/schemas/organization.schema';
 import { Role } from '../common/enums/role.enum';
 import { Types } from 'mongoose';
 
@@ -132,8 +133,9 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    let org: OrganizationDocument | null = null;
     if (user.orgId) {
-      const org = await this.organizationsRepository.findById(user.orgId.toString());
+      org = await this.organizationsRepository.findById(user.orgId.toString()) as OrganizationDocument | null;
       if (!org) {
         throw new ForbiddenException('Organization no longer exists');
       }
@@ -153,6 +155,7 @@ export class AuthService {
         name: doc.name,
         email: doc.email,
         role: doc.role,
+        orgSlug: org?.slug ?? null,
       },
     };
   }
