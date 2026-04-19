@@ -204,7 +204,6 @@ export function Sidebar({ brandRole, items, activeKey, user, onLogout }: Sidebar
             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--fg-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name || user.email}</span>
             <span style={{ fontSize: 11, color: 'var(--fg-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.email}</span>
           </div>
-          <Icons.Settings size={13} />
         </Link>
         <button onClick={onLogout} style={{
           display: 'flex', alignItems: 'center', gap: 10,
