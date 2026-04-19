@@ -113,19 +113,16 @@ const FEATURES = [
 const STEPS = [
   {
     num: '01',
-    emoji: '🏢',
     title: 'Register your organization',
     desc: 'Sign up in minutes, receive a unique portal URL, and configure your team structure immediately.',
   },
   {
     num: '02',
-    emoji: '🔗',
     title: 'Invite users & staff',
     desc: 'Share your join link. Members self-register with no CSVs, no manual setup, and no email invites required.',
   },
   {
     num: '03',
-    emoji: '✅',
     title: 'Resolve complaints faster',
     desc: 'Tickets auto-assign to staff. Track every complaint from ASSIGNED to CLOSED with a full audit trail.',
   },
@@ -133,7 +130,6 @@ const STEPS = [
 
 const ROLES = [
   {
-    emoji: '👤',
     title: 'Customer',
     tag: 'USER',
     tagBg: 'var(--status-assigned-bg)',
@@ -142,7 +138,6 @@ const ROLES = [
     perks: ['Submit complaints instantly', 'Track status end-to-end', 'View assigned staff', 'Full complaint history'],
   },
   {
-    emoji: '🧑‍💼',
     title: 'Staff member',
     tag: 'STAFF',
     tagBg: 'var(--status-progress-bg)',
@@ -151,7 +146,6 @@ const ROLES = [
     perks: ['Personal assignment queue', 'Status & progress updates', 'Search & filter tools', 'Workload visibility'],
   },
   {
-    emoji: '🏛️',
     title: 'Organization admin',
     tag: 'ADMIN',
     tagBg: 'var(--accent-50)',
@@ -475,11 +469,11 @@ export default function LandingPage() {
                   border: '2px solid var(--border-subtle)',
                   boxShadow: '0 0 0 6px var(--bg-app)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  margin: '0 auto 24px', fontSize: 26,
+                  margin: '0 auto 24px', fontSize: 18, fontWeight: 800,
+                  color: 'var(--accent-500)', letterSpacing: '-0.01em',
                 }}>
-                  {s.emoji}
+                  {s.num}
                 </div>
-                <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--accent-500)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>{s.num}</div>
                 <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--fg-primary)', margin: '0 0 10px', letterSpacing: '-0.01em' }}>{s.title}</h3>
                 <p style={{ fontSize: 14.5, color: 'var(--fg-tertiary)', lineHeight: 1.68, margin: 0 }}>{s.desc}</p>
               </div>
@@ -513,7 +507,7 @@ export default function LandingPage() {
                     background: r.tagBg, color: r.tagFg,
                     fontSize: 12.5, fontWeight: 700, marginBottom: 20, width: 'fit-content',
                   }}>
-                    {r.emoji} {r.title}
+                    {r.title}
                   </div>
                   <p style={{ fontSize: 14.5, color: 'var(--fg-secondary)', lineHeight: 1.68, margin: '0 0 22px', flex: 1 }}>{r.desc}</p>
                   <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 9 }}>

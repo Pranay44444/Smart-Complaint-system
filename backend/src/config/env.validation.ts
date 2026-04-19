@@ -38,7 +38,7 @@ export function validateEnv(config: Record<string, unknown>) {
     const messages = errors
       .map((e) => Object.values(e.constraints ?? {}).join(', '))
       .join('\n');
-    throw new Error(`❌ Environment validation failed:\n${messages}`);
+    throw new Error(`Environment validation failed:\n${messages}`);
   }
 
   return validatedConfig;

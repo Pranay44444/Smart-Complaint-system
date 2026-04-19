@@ -39,7 +39,7 @@ const UserModel = mongoose.model('User', UserSchema);
 
 async function seed() {
   await mongoose.connect(MONGO_URI);
-  console.log('✅ Connected to MongoDB');
+  console.log('Connected to MongoDB');
 
   // 1. Create sample organization
   let org = await OrganizationModel.findOne({ slug: 'acme-corp' });
@@ -50,9 +50,9 @@ async function seed() {
       plan: 'FREE',
       isActive: true,
     });
-    console.log(`🏢 Seeded Organization: Acme Corp`);
+    console.log('Seeded organization: Acme Corp');
   } else {
-    console.log(`⏭  Skipping Acme Corp — already exists`);
+    console.log('Skipping Acme Corp, already exists');
   }
 
   const orgId = (org as any)._id;
@@ -113,23 +113,23 @@ async function seed() {
       // Update orgId if missing (for already-seeded users)
       if (!exists.orgId && user.orgId) {
         await UserModel.updateOne({ email: user.email }, { orgId: user.orgId });
-        console.log(`🔗 Linked ${user.email} → Acme Corp`);
+        console.log(`Linked ${user.email} to Acme Corp`);
       } else {
-        console.log(`⏭  Skipping ${user.email} — already exists`);
+        console.log(`Skipping ${user.email}, already exists`);
       }
       continue;
     }
 
     const hashedPassword = await bcrypt.hash(user.password, 10);
     await UserModel.create({ ...user, password: hashedPassword });
-    console.log(`🌱 Seeded ${user.role}: ${user.email}`);
+    console.log(`Seeded ${user.role}: ${user.email}`);
   }
 
   await mongoose.disconnect();
-  console.log('✅ Seeding complete. Connection closed.');
+  console.log('Seeding complete. Connection closed.');
 }
 
 seed().catch((err) => {
-  console.error('❌ Seeding failed:', err);
+  console.error('Seeding failed:', err);
   process.exit(1);
 });

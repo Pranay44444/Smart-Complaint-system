@@ -1,127 +1,111 @@
-# Smart Complaint System (Multi-Tenant SaaS)
+# Smart Complaint
 
-An intelligent, multi-tenant SaaS platform built to securely manage and resolve incoming customer complaints, assign staff workflows, and view high-level business analytics. Designed with a Next.js (React) front-end and a secure NestJS (Node.js) back-end.
+A multi-tenant complaint management platform. Organizations register, invite their team, and manage customer issues end-to-end — from submission through assignment to resolution.
 
-## 🚀 Features & Multi-Tenant Architecture
+## Tech stack
 
-This system leverages an **Organization-scoped (Tenant)** data access layer explicitly engineered for SaaS. Data isolation guarantees the following:
-- A `SUPER_ADMIN` has platform-level oversight of all organizations.
-- Organizations self-register independently and are assigned a unique robust unique slug.
-- Internal company users (ADMIN, STAFF, USER) and their complaint data are strongly partitioned strictly locking everything inside the `orgId` bound to their JWT.
-- An organization can be **suspended**, instantly shutting off subsequent logins and portal interactions for its members.
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 16, React 19, TypeScript |
+| Backend | NestJS, TypeScript |
+| Database | MongoDB (Mongoose) |
+| Auth | JWT, bcrypt |
 
-### Core Portals
-1. **Super Admin Dashboard**: Manually manage organizations, review system-wide KPIs, and toggle subscription/suspension states.
-2. **Business Admin Dashboard**: Review complaint status volumes, map out staff workload execution, and manage staff accounts gracefully.
-3. **Staff Sub-Portal**: An isolated assignee queue designed specifically for staff members to update progress and close tasks.
-4. **Public Complaint Portal**: Submit new issues via a form and track resolution statuses securely.
+## Project structure
 
----
+```
+smart-complaint/
+├── frontend/   # Next.js app (port 3000)
+└── backend/    # NestJS API (port 3001)
+```
 
-## 💻 Tech Stack
-- **Frontend**: Next.js 15, React 19, Tailwind CSS v4, React Hook Form, Zod.
-- **Backend**: NestJS 11, TypeScript, MongoDB (Mongoose), JWT Auth.
+## Roles
 
----
+| Role | Access |
+|---|---|
+| **Super Admin** | Platform-wide — manages all organizations (suspend, activate, delete) |
+| **Admin** | Organization-wide — all complaints, staff management, KPI dashboard |
+| **Staff** | Personal queue — assigned complaints only, status updates |
+| **User** | Self-service — submit complaints, track own issues |
 
-## 🛠 Setup Instructions
+## Getting started
 
-### 1. Backend Setup (NestJS + MongoDB)
+**Prerequisites:** Node.js 18+, MongoDB running locally
 
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Configure Environment Variables (`backend/.env`):
-   ```env
-   # Ensure you protect this in production environments!
-   MONGO_URI=mongodb://localhost:27017/smart-complaint
-   JWT_SECRET=super_secret_jwt_key
-   JWT_EXPIRES_IN=1d
-   PORT=3001
-   ```
-4. Start the backend DEV server:
-   ```bash
-   npm run start:dev
-   ```
-
-### 2. Frontend Setup (Next.js)
-
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Configure Environment Variables (`frontend/.env.local`):
-   ```env
-   NEXT_PUBLIC_API_URL=http://localhost:3001
-   ```
-4. Start the frontend DEV server:
-   ```bash
-   npm run dev
-   ```
-
----
-
-## 🌱 Seeding Initial Data
-
-To test the system immediately, you can populate the database with a demonstration organization, a super admin, and staff structure.
+### Backend
 
 ```bash
 cd backend
-npm run seed
+npm install
 ```
 
-**Seeded Roles provided:**
-| Role | Email | Password | Access Level |
-|---|---|---|---|
-| **SUPER_ADMIN** | `superadmin@complaint.dev` | `Password123` | Platform global oversight |
-| **Org ADMIN** | `admin@complaint.dev` | `Password123` | Master configuration for Acme Corp |
-| **Org STAFF** | `alice@complaint.dev` | `Password123` | Processing worker for Acme Corp |
-| **Normal USER** | `diana@complaint.dev` | `Password123` | Can submit & track issues |
+Create `backend/.env`:
 
----
+```env
+MONGODB_URI=mongodb://localhost:27017/smart-complaint
+JWT_SECRET=your_jwt_secret
+PORT=3001
+```
 
-## 📡 API Routing Summary
+```bash
+npm run start:dev
+```
 
-### Auth & Onboarding (`/auth`)
-- `POST /auth/register/org` — Auto-configure a tenant business with an initial ADMIN lock.
-- `POST /auth/register` — Standard user registration directly tied to an organization's signup link. 
-- `POST /auth/login` — Extracts orgId securely into the JWT.
+### Frontend
 
-### Super Admin Controls (`/superadmin/orgs`)
-- `GET /superadmin/orgs` — Returns all domains/businesses.
-- `PATCH /superadmin/orgs/:id/suspend` — Flips tenant access offline.
-- `PATCH /superadmin/orgs/:id/activate` — Re-enables access.
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-### Business Resources (`/complaints`, `/users`, `/dashboard`)
-*These operations are hard-coded to intercept `orgId` from the caller's JWT.*
-- `GET /complaints` — Returns scoped workload for the correct tenant.
-- `POST /complaints` — Injects task safely scoping assignment round-robin mechanics onto the specific Org's staff queue.
-- `GET /dashboard/summary` — Compiles tenant-specific issue statistics.
+Frontend runs at `http://localhost:3000`, API at `http://localhost:3001`.
 
----
+To override the API URL, set `NEXT_PUBLIC_API_URL` in `frontend/.env.local`.
 
-## 🔐 Role Permissions Structure
+## Key flows
 
-| Feature | SUPER_ADMIN | ADMIN | STAFF | USER |
-| :-: | :-: | :-: | :-: | :-: |
-| Overview / Tenants | **Yes** | No | No | No |
-| Suspend Business | **Yes** | No | No | No |
-| View Organization KPIs | No | **Yes** | No | No |
-| Change Users' Role | No | **Yes** | No | No |
-| Assign Tickets to Staff | No | **Yes** | No | No |
-| Update Ticket Status | No | No | **Yes** | No |
-| View All Org Tickets | No | **Yes** | No | No |
-| View Assigned Tickets | No | No | **Yes** | No |
-| View Owned Tickets | No | No | No | **Yes** |
-| Create Ticket | No | **Yes** | **Yes** | **Yes** |
+**Organization onboarding**
+1. Admin registers at `/register/org` — creates the org and becomes its first admin
+2. Admin copies the invite link from their dashboard
+3. Users and staff self-register via `/join/[slug]`
 
-*(Note: Data isolation explicitly prevents an ADMIN of Organization A from perceiving data generated by Organization B).*
+**Complaint lifecycle**
+```
+Submitted → ASSIGNED (auto, round-robin) → IN_PROGRESS → RESOLVED → CLOSED
+```
+Auto-assignment distributes to staff via round-robin on creation. Staff update status; admins can reassign or close any complaint.
+
+**Authentication**
+JWT stored in localStorage, attached to every request via Axios interceptor. Role-based redirect on login:
+
+| Role | Redirect |
+|---|---|
+| Super Admin | `/superadmin/dashboard` |
+| Admin | `/admin/dashboard` |
+| Staff | `/staff/complaints` |
+| User | `/dashboard` |
+
+## API reference
+
+| Method | Endpoint | Access |
+|---|---|---|
+| POST | `/auth/login` | Public |
+| POST | `/auth/register/org` | Public |
+| POST | `/auth/register/join/:slug` | Public |
+| GET | `/complaints` | User / Staff / Admin |
+| POST | `/complaints` | User / Admin |
+| PATCH | `/complaints/:id/assign` | Admin |
+| PATCH | `/complaints/:id/status` | Staff |
+| PATCH | `/complaints/:id/close` | Admin |
+| GET | `/dashboard/summary` | Admin |
+| GET | `/dashboard/staff-performance` | Admin |
+| GET | `/users` | Admin |
+| PATCH | `/users/:id/role` | Admin |
+| GET | `/superadmin/orgs` | Super Admin |
+| PATCH | `/superadmin/orgs/:id/suspend` | Super Admin |
+| DELETE | `/superadmin/orgs/:id` | Super Admin |
+
+## Author
+
+Pranay Chitare
