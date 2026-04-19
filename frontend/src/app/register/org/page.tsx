@@ -61,7 +61,7 @@ export default function RegisterOrgPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <label style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--fg-secondary)' }}>Company name</label>
-                <input type="text" {...register('orgName')} placeholder="e.g. Acme Corp" style={fieldStyle(!!errors.orgName)}/>
+                <input type="text" {...register('orgName')} style={fieldStyle(!!errors.orgName)}/>
                 {errors.orgName && <span style={{ fontSize: 12, color: 'var(--danger)' }}>{errors.orgName.message}</span>}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -93,7 +93,6 @@ export default function RegisterOrgPage() {
 
           <div style={{ marginTop: 20, textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
             <Link href="/login" style={{ fontSize: 13, color: 'var(--accent-600)', fontWeight: 500 }}>Already have an account? Sign in</Link>
-            <p style={{ fontSize: 13, color: 'var(--fg-quaternary)', margin: 0 }}>Are you a customer? Ask your organization for their join link.</p>
           </div>
         </div>
       </div>

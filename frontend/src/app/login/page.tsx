@@ -57,7 +57,7 @@ function LoginForm() {
             {joinSlug ? (
               <Link href={`/join/${joinSlug}`} style={{ color: 'var(--accent-600)', fontWeight: 500 }}>back to registration</Link>
             ) : (
-              <Link href="/register" style={{ color: 'var(--accent-600)', fontWeight: 500 }}>create a new account</Link>
+              <Link href="/register/org" style={{ color: 'var(--accent-600)', fontWeight: 500 }}>register your organization</Link>
             )}
           </p>
         </div>
