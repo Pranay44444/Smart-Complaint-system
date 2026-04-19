@@ -94,10 +94,11 @@ export class ComplaintsRepository {
   }
 
   async findByAssignee(assigneeId: string, orgId: string, opts: QueryOptions = {}): Promise<PaginatedResult> {
-    const { page = 1, limit = 10, search } = opts;
+    const { page = 1, limit = 10, search, status } = opts;
     const skip = (page - 1) * limit;
 
     const query: any = { assignedTo: new Types.ObjectId(assigneeId), orgId: new Types.ObjectId(orgId) };
+    if (status && status !== 'ALL') query.status = status;
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },

@@ -1,5 +1,4 @@
 'use client';
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -7,23 +6,19 @@ import * as z from 'zod';
 import api from '../../../lib/axios';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { BrandMark, Btn, Icons } from '../../../components/ui';
 
 const complaintSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
 });
-
 type ComplaintFormValues = z.infer<typeof complaintSchema>;
 
 export default function NewComplaintPage() {
   const router = useRouter();
   const [serverError, setServerError] = useState('');
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<ComplaintFormValues>({
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<ComplaintFormValues>({
     resolver: zodResolver(complaintSchema),
   });
 
@@ -31,65 +26,65 @@ export default function NewComplaintPage() {
     try {
       setServerError('');
       const res = await api.post('/complaints', data);
-      if (res.data.success) {
-        router.push('/dashboard');
-      }
+      if (res.data.success) router.push('/dashboard');
     } catch (err: any) {
       setServerError(err.response?.data?.message || 'Failed to submit complaint');
     }
   };
 
+  const fieldStyle = (hasError: boolean): React.CSSProperties => ({
+    fontFamily: 'var(--font-sans)', fontSize: 13.5, padding: '9px 12px',
+    borderRadius: 'var(--radius-md)', border: `1px solid ${hasError ? 'var(--danger)' : 'var(--border-soft)'}`,
+    background: 'var(--bg-surface)', color: 'var(--fg-primary)', outline: 'none', width: '100%',
+  });
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <nav className="bg-white shadow border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center">
-            <Link href="/dashboard" className="text-sm font-medium text-blue-600 hover:text-blue-500">
-              &larr; Back to Dashboard
-            </Link>
-          </div>
-        </div>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-app)', display: 'flex', flexDirection: 'column' }}>
+      {/* Nav */}
+      <nav style={{ height: 64, background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', padding: '0 28px', gap: 14 }}>
+        <Link href="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--fg-tertiary)', textDecoration: 'none', fontWeight: 500 }}>
+          <Icons.ChevLeft size={14}/> Back to dashboard
+        </Link>
+        <div style={{ flex: 1 }}/>
+        <BrandMark size={28}/>
       </nav>
 
-      <main className="flex-1 flex justify-center py-12 px-4 sm:px-6">
-        <div className="w-full max-w-2xl bg-white p-8 rounded-xl shadow-sm border border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Submit a New Complaint</h2>
-          
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700">Subject/Title</label>
-              <input
-                id="title"
-                type="text"
-                {...register('title')}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-              />
-              {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>}
-            </div>
+      <main style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '40px 16px' }}>
+        <div style={{ width: '100%', maxWidth: 640 }}>
+          <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--fg-primary)', margin: '0 0 6px' }}>Submit a new complaint</h1>
+          <p style={{ fontSize: 14, color: 'var(--fg-tertiary)', margin: '0 0 24px', lineHeight: 1.6 }}>Give us a clear subject and a short description. You'll be able to track progress here.</p>
 
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">Details</label>
-              <textarea
-                id="description"
-                rows={6}
-                {...register('description')}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
-              />
-              {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>}
-            </div>
+          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-sm)', padding: '28px 28px' }}>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--fg-secondary)' }}>Subject</label>
+                  <input type="text" {...register('title')} placeholder="e.g. Refund not received" style={fieldStyle(!!errors.title)}/>
+                  {errors.title && <span style={{ fontSize: 12, color: 'var(--danger)' }}>{errors.title.message}</span>}
+                </div>
 
-            {serverError && <p className="text-sm text-red-600">{serverError}</p>}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--fg-secondary)' }}>Details</label>
+                  <textarea rows={7} {...register('description')} placeholder="What happened? Include order IDs, dates, and anything else relevant." style={{ ...fieldStyle(!!errors.description), resize: 'vertical', lineHeight: 1.6 }}/>
+                  {errors.description && <span style={{ fontSize: 12, color: 'var(--danger)' }}>{errors.description.message}</span>}
+                </div>
 
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="rounded-md bg-blue-600 px-6 py-2 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit Complaint'}
-              </button>
-            </div>
-          </form>
+                {serverError && (
+                  <div style={{ background: 'var(--danger-bg)', borderRadius: 'var(--radius-md)', padding: '10px 12px', fontSize: 13, color: 'var(--danger)' }}>{serverError}</div>
+                )}
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 12, color: 'var(--fg-quaternary)' }}>You'll receive updates here and by email.</span>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <Btn variant="secondary" onClick={() => router.push('/dashboard')}>Cancel</Btn>
+                    <button type="submit" disabled={isSubmitting} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '9px 14px', borderRadius: 'var(--radius-md)', background: isSubmitting ? 'var(--accent-400)' : 'var(--accent-500)', color: '#fff', border: 'none', fontSize: 13.5, fontWeight: 600, cursor: isSubmitting ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-sans)' }}>
+                      {isSubmitting ? 'Submitting…' : 'Submit complaint'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
         </div>
       </main>
     </div>
